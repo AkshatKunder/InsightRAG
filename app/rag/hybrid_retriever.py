@@ -1,0 +1,119 @@
+from app.rag.loader import load_pdf
+from app.rag.chunker import chunk_pages
+from app.rag.bm25_retriever import BM25Retriever
+from app.rag.retriever import Retriever
+
+
+class HybridRetriever:
+
+    def __init__(self, pdf_path="data/documents/annual_report.pdf"):
+
+        # Load and chunk document
+        pages = load_pdf(pdf_path)
+        self.chunks = chunk_pages(pages)
+
+        # Initialize retrievers
+        self.bm25 = BM25Retriever(self.chunks)
+        self.vector_retriever = Retriever()
+
+    def search(self, query, top_k=5, candidate_k=20):
+
+        # Retrieve candidates from both methods
+        bm25_results = self.bm25.search(
+            query,
+            top_k=candidate_k
+        )
+
+        vector_results = self.vector_retriever.search(
+            query,
+            top_k=candidate_k
+        )
+
+        combined = {}
+
+        # -------------------------
+        # BM25 results
+        # -------------------------
+
+        for rank, result in enumerate(bm25_results, start=1):
+
+            key = (
+                result["source"],
+                result["page"],
+                result["text"]
+            )
+
+            if key not in combined:
+
+                combined[key] = {
+                    "text": result["text"],
+                    "source": result["source"],
+                    "page": result["page"],
+
+                    "bm25_score": None,
+                    "bm25_rank": None,
+
+                    "vector_score": None,
+                    "vector_rank": None,
+
+                    "rrf_score": 0.0
+                }
+
+            combined[key]["bm25_score"] = result["score"]
+            combined[key]["bm25_rank"] = rank
+
+            # Reciprocal Rank Fusion
+            combined[key]["rrf_score"] += 1 / (60 + rank)
+
+        # -------------------------
+        # Vector results
+        # -------------------------
+
+        for rank, result in enumerate(vector_results, start=1):
+
+            key = (
+                result["source"],
+                result["page"],
+                result["text"]
+            )
+
+            if key not in combined:
+
+                combined[key] = {
+                    "text": result["text"],
+                    "source": result["source"],
+                    "page": result["page"],
+
+                    "bm25_score": None,
+                    "bm25_rank": None,
+
+                    "vector_score": None,
+                    "vector_rank": None,
+
+                    "rrf_score": 0.0
+                }
+
+            combined[key]["vector_score"] = result["score"]
+            combined[key]["vector_rank"] = rank
+
+            # Reciprocal Rank Fusion
+            combined[key]["rrf_score"] += 1 / (60 + rank)
+
+        # -------------------------
+        # Sort by hybrid RRF score
+        # -------------------------
+
+        ranked_results = sorted(
+            combined.values(),
+            key=lambda x: x["rrf_score"],
+            reverse=True
+        )
+
+        # Return final results
+        final_results = ranked_results[:top_k]
+
+        # Use RRF as the main score
+        for result in final_results:
+            result["score"] = result["rrf_score"]
+
+        return final_results

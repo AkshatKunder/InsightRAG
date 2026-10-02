@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+.pytest_cache/
+.DS_Store
+*.log
+
+# Local vector database
+data/qdrant/
+
+# Local/private documents
+data/documents/
