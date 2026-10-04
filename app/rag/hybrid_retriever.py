@@ -8,17 +8,17 @@ class HybridRetriever:
 
     def __init__(self, pdf_path="data/documents/annual_report.pdf"):
 
-        # Load and chunk document
         pages = load_pdf(pdf_path)
+
         self.chunks = chunk_pages(pages)
 
-        # Initialize retrievers
         self.bm25 = BM25Retriever(self.chunks)
+
         self.vector_retriever = Retriever()
 
-    def search(self, query, top_k=5, candidate_k=20):
+    def search(self, query, top_k=5, candidate_k=50):
 
-        # Retrieve candidates from both methods
+        # Retrieve more candidates from both systems
         bm25_results = self.bm25.search(
             query,
             top_k=candidate_k
@@ -31,11 +31,14 @@ class HybridRetriever:
 
         combined = {}
 
-        # -------------------------
-        # BM25 results
-        # -------------------------
+        # -----------------------------------
+        # BM25
+        # -----------------------------------
 
-        for rank, result in enumerate(bm25_results, start=1):
+        for rank, result in enumerate(
+            bm25_results,
+            start=1
+        ):
 
             key = (
                 result["source"],
@@ -60,16 +63,21 @@ class HybridRetriever:
                 }
 
             combined[key]["bm25_score"] = result["score"]
+
             combined[key]["bm25_rank"] = rank
 
-            # Reciprocal Rank Fusion
-            combined[key]["rrf_score"] += 1 / (60 + rank)
+            combined[key]["rrf_score"] += (
+                0.4 / (60 + rank)
+            )
 
-        # -------------------------
-        # Vector results
-        # -------------------------
+        # -----------------------------------
+        # Vector Search
+        # -----------------------------------
 
-        for rank, result in enumerate(vector_results, start=1):
+        for rank, result in enumerate(
+            vector_results,
+            start=1
+        ):
 
             key = (
                 result["source"],
@@ -94,14 +102,16 @@ class HybridRetriever:
                 }
 
             combined[key]["vector_score"] = result["score"]
+
             combined[key]["vector_rank"] = rank
 
-            # Reciprocal Rank Fusion
-            combined[key]["rrf_score"] += 1 / (60 + rank)
+            combined[key]["rrf_score"] += (
+                0.6 / (60 + rank)
+            )
 
-        # -------------------------
-        # Sort by hybrid RRF score
-        # -------------------------
+        # -----------------------------------
+        # Sort
+        # -----------------------------------
 
         ranked_results = sorted(
             combined.values(),
@@ -109,11 +119,11 @@ class HybridRetriever:
             reverse=True
         )
 
-        # Return final results
         final_results = ranked_results[:top_k]
 
-        # Use RRF as the main score
+        # Main score = hybrid score
         for result in final_results:
+
             result["score"] = result["rrf_score"]
 
         return final_results

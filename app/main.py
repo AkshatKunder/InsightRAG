@@ -1,21 +1,26 @@
 from app.rag.hybrid_retriever import HybridRetriever
+from app.rag.reranker import Reranker
 from app.rag.generator import Generator
 
 
 def main():
 
     print("=" * 70)
-    print("InsightRAG - Local Document QA")
+    print("InsightRAG - Hybrid RAG Assistant")
     print("=" * 70)
-    print("Ask questions about the annual report.")
-    print("Type 'exit' to quit.")
 
+    # Initialize components
     retriever = HybridRetriever()
+    reranker = Reranker()
     generator = Generator()
+
+    print("\nSystem ready.")
+    print("Ask questions about the annual report.")
+    print("Type 'exit' to quit.\n")
 
     while True:
 
-        question = input("\nQuestion: ").strip()
+        question = input("Question: ").strip()
 
         if question.lower() == "exit":
             break
@@ -23,39 +28,57 @@ def main():
         if not question:
             continue
 
-        print("\nSearching documents...")
+        # --------------------------------
+        # Step 1: Hybrid Retrieval
+        # --------------------------------
 
         results = retriever.search(
             question,
+            top_k=20,
+            candidate_k=50
+        )
+
+        # --------------------------------
+        # Step 2: Reranking
+        # --------------------------------
+
+        reranked_results = reranker.rerank(
+            question,
+            results,
             top_k=5
         )
 
-        print("Generating answer...")
+        # --------------------------------
+        # Step 3: Generate Answer
+        # --------------------------------
 
         answer = generator.generate(
             question,
-            results
+            reranked_results
         )
 
-        print("\n" + "=" * 70)
-        print("ANSWER")
-        print("=" * 70)
+        # --------------------------------
+        # Display Answer
+        # --------------------------------
+
+        print("\nAnswer:")
         print(answer)
 
-        print("\n" + "=" * 70)
-        print("SOURCES")
-        print("=" * 70)
+        print("\nSources:")
 
-        for i, result in enumerate(results, start=1):
+        for i, result in enumerate(reranked_results, start=1):
+
             print(
-                f"{i}. {result['source']} — "
-                f"Page {result['page']} — "
-                f"Score: {result['score']:.4f}"
+                f"{i}. {result['source']} "
+                f"— Page {result['page']} "
+                f"— Reranker Score: "
+                f"{result['reranker_score']:.4f}"
             )
 
-    retriever.vector_retriever.vector_store.close()
+        print("\n" + "-" * 70 + "\n")
 
-    print("\nInsightRAG stopped.")
+    # Clean up Qdrant
+    retriever.vector_retriever.vector_store.close()
 
 
 if __name__ == "__main__":

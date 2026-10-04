@@ -10,20 +10,18 @@ class Generator:
         self.model = MODEL_NAME
 
     def generate(self, question, retrieved_chunks):
-        """
-        Generate an answer using only the retrieved document context.
-        """
 
         context_parts = []
 
         for i, chunk in enumerate(retrieved_chunks, start=1):
+
             context_parts.append(
                 f"""
-Source {i}
-File: {chunk['source']}
-Page: {chunk['page']}
+SOURCE {i}
+DOCUMENT: {chunk['source']}
+PAGE: {chunk['page']}
 
-Content:
+CONTENT:
 {chunk['text']}
 """
             )
@@ -31,25 +29,53 @@ Content:
         context = "\n".join(context_parts)
 
         prompt = f"""
-You are an AI assistant answering questions about a company's annual report.
+You are a document question-answering system.
 
-Answer the user's question using ONLY the information provided in the
-retrieved context below.
+Your task is to answer the user's question using ONLY the provided
+document context.
 
-Rules:
-1. Do not use outside knowledge.
-2. If the answer cannot be found in the context, say:
+IMPORTANT RULES:
+
+1. Do NOT use outside knowledge.
+
+2. Do NOT guess or infer an answer that is not explicitly supported
+   by the provided context.
+
+3. Numbers are extremely important.
+   Only provide a number if the context explicitly supports that number
+   as the answer to the user's question.
+
+4. Carefully distinguish between:
+   - countries where the company operates
+   - countries where the company has steel-making operations
+   - number of employees
+   - sales
+   - percentages
+   - dates
+   - other numerical values
+
+5. If multiple sources contain different numbers, determine which
+   number directly answers the user's question.
+
+6. If the answer is explicitly present in the context, give the answer
+   directly and cite the page number.
+
+7. If the answer cannot be determined from the context, respond exactly:
    "I could not find this information in the provided document."
-3. Give a concise and factual answer.
-4. Include the source page in your answer.
 
-Retrieved context:
+8. Do not mention information that is unrelated to the question.
+
+9. Keep the answer concise.
+
+DOCUMENT CONTEXT:
+
 {context}
 
-User question:
+USER QUESTION:
+
 {question}
 
-Answer:
+ANSWER:
 """
 
         response = ollama.chat(
