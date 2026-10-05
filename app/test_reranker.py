@@ -51,7 +51,7 @@ for i, result in enumerate(reranked_results, start=1):
     print(
         f"Rank {i} | "
         f"Page {result['page']} | "
-        f"Reranker Score: {result['reranker_score']:.6f}"
+        f"Final Score: {result['final_score']:.6f}"
     )
 
     print(

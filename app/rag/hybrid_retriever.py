@@ -2,6 +2,7 @@ from app.rag.loader import load_pdf
 from app.rag.chunker import chunk_pages
 from app.rag.bm25_retriever import BM25Retriever
 from app.rag.retriever import Retriever
+from app.rag.query_expander import expand_query
 
 
 class HybridRetriever:
@@ -18,14 +19,16 @@ class HybridRetriever:
 
     def search(self, query, top_k=5, candidate_k=50):
 
+        expanded_query = expand_query(query)
+
         # Retrieve more candidates from both systems
         bm25_results = self.bm25.search(
-            query,
+            expanded_query,
             top_k=candidate_k
         )
 
         vector_results = self.vector_retriever.search(
-            query,
+            expanded_query,
             top_k=candidate_k
         )
 
@@ -119,7 +122,23 @@ class HybridRetriever:
             reverse=True
         )
 
-        final_results = ranked_results[:top_k]
+        final_results = []
+        seen_pages = set()
+
+        for result in ranked_results:
+            page_key = (
+                result["source"],
+                result["page"]
+            )
+
+            if page_key in seen_pages:
+                continue
+
+            final_results.append(result)
+            seen_pages.add(page_key)
+
+            if len(final_results) >= top_k:
+                break
 
         # Main score = hybrid score
         for result in final_results:
