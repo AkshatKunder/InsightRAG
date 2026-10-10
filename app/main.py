@@ -66,14 +66,14 @@ def main():
 
         print("\nSources:")
 
-        for i, result in enumerate(reranked_results, start=1):
+        seen_sources = set()
 
-            print(
-                f"{i}. {result['source']} "
-                f"— Page {result['page']} "
-                f"— Reranker Score: "
-                f"{result['reranker_score']:.4f}"
-            )
+        for result in reranked_results:
+            source_key = (result["source"], result["page"])
+
+            if source_key not in seen_sources:
+                print(f"- {result['source']} — Page {result['page']}")
+                seen_sources.add(source_key)
 
         print("\n" + "-" * 70 + "\n")
 

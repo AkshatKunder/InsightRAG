@@ -57,15 +57,15 @@ IMPORTANT RULES:
 5. If multiple sources contain different numbers, determine which
    number directly answers the user's question.
 
-6. If the answer is explicitly present in the context, give the answer
-   directly and cite the page number.
+6. Answer the question using the provided context.
 
-7. If the answer cannot be determined from the context, respond exactly:
+7. Do not generate source numbers, page numbers, or citations.
+   The application will display source information separately.
+
+8. If the answer cannot be determined from the context, respond exactly:
    "I could not find this information in the provided document."
 
-8. Do not mention information that is unrelated to the question.
-
-9. Keep the answer concise.
+9. Keep the answer concise and do not include unrelated information.
 
 DOCUMENT CONTEXT:
 
