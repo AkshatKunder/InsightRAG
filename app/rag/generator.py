@@ -28,55 +28,30 @@ CONTENT:
 
         context = "\n".join(context_parts)
 
-        prompt = f"""
-You are a document question-answering system.
+        prompt = f"""You are a precise document question-answering assistant.
 
-Your task is to answer the user's question using ONLY the provided
-document context.
+Answer the user's question using only the document context below.
 
-IMPORTANT RULES:
-
-1. Do NOT use outside knowledge.
-
-2. Do NOT guess or infer an answer that is not explicitly supported
-   by the provided context.
-
-3. Numbers are extremely important.
-   Only provide a number if the context explicitly supports that number
-   as the answer to the user's question.
-
-4. Carefully distinguish between:
-   - countries where the company operates
-   - countries where the company has steel-making operations
-   - number of employees
-   - sales
-   - percentages
-   - dates
-   - other numerical values
-
-5. If multiple sources contain different numbers, determine which
-   number directly answers the user's question.
-
-6. Answer the question using the provided context.
-
-7. Do not generate source numbers, page numbers, or citations.
-   The application will display source information separately.
-
-8. If the answer cannot be determined from the context, respond exactly:
+Rules:
+1. Do not use outside knowledge.
+2. Do not invent facts or numbers.
+3. Do not mention source numbers, page numbers, document names,
+   or citations.
+4. Do not repeat the same answer or number unnecessarily.
+5. If the context contains the answer, state it directly.
+6. If the answer cannot be determined from the context, respond exactly:
    "I could not find this information in the provided document."
-
-9. Keep the answer concise and do not include unrelated information.
+7. Keep the answer concise.
+8. Distinguish total sales from segment sales and other uses of
+   the words "sale" or "sales".
 
 DOCUMENT CONTEXT:
-
 {context}
 
 USER QUESTION:
-
 {question}
 
-ANSWER:
-"""
+ANSWER:"""
 
         response = ollama.chat(
             model=self.model,

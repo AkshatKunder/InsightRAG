@@ -1,6 +1,7 @@
 from app.rag.hybrid_retriever import HybridRetriever
 from app.rag.reranker import Reranker
 from app.rag.generator import Generator
+from app.rag.citation_selector import select_citations
 
 
 def main():
@@ -64,16 +65,29 @@ def main():
         print("\nAnswer:")
         print(answer)
 
-        print("\nSources:")
-
-        seen_sources = set()
+        print("\nDEBUG — Pages passed to citation selector:")
 
         for result in reranked_results:
-            source_key = (result["source"], result["page"])
+            print(
+                f"Page {result['page']} | "
+                f"Final score: {result.get('final_score', 'N/A')}"
+            )
 
-            if source_key not in seen_sources:
-                print(f"- {result['source']} — Page {result['page']}")
-                seen_sources.add(source_key)
+        citations = select_citations(
+            question=question,
+            answer=answer,
+            retrieved_chunks=reranked_results,
+            max_sources=3,
+        )
+
+        print("\nSelected Evidence:")
+
+        if citations:
+            for citation in citations:
+                print(f"- {citation['source']} — Page {citation['page']}")
+                print(f"  Evidence: {citation['text'][:250]}...")
+        else:
+            print("No relevant evidence candidates were selected.")
 
         print("\n" + "-" * 70 + "\n")
 
