@@ -2,6 +2,7 @@ from app.rag.hybrid_retriever import HybridRetriever
 from app.rag.reranker import Reranker
 from app.rag.generator import Generator
 from app.rag.citation_selector import select_citations
+from app.rag.citation_validator import validate_citation
 
 
 def main():
@@ -65,20 +66,28 @@ def main():
         print("\nAnswer:")
         print(answer)
 
-        print("\nDEBUG — Pages passed to citation selector:")
-
-        for result in reranked_results:
-            print(
-                f"Page {result['page']} | "
-                f"Final score: {result.get('final_score', 'N/A')}"
-            )
-
         citations = select_citations(
             question=question,
             answer=answer,
             retrieved_chunks=reranked_results,
             max_sources=3,
         )
+
+        # --------------------------------
+        # Step 4: Citation Validation
+        # --------------------------------
+
+        validation = validate_citation(
+            answer=answer,
+            citations=citations
+        )
+
+        print("\nCitation Validation:")
+        print("Status:", "SUPPORTED" if validation["is_valid"] else "UNSUPPORTED")
+        print("Reason:", validation["reason"])
+
+        if not validation["is_valid"]:
+            print("Unsupported numbers:", validation.get("unsupported_numbers", []))
 
         print("\nSelected Evidence:")
 
