@@ -16,12 +16,17 @@ class BM25Retriever:
             for chunk in chunks
         ]
 
-        self.bm25 = BM25Okapi(tokenized_chunks)
+        # rank_bm25 cannot construct an index with no documents. Retain the
+        # public object API and make an empty corpus safely searchable.
+        self.bm25 = BM25Okapi(tokenized_chunks) if tokenized_chunks else None
 
     def search(self, query, top_k=5):
         """
         Search chunks using BM25 keyword matching.
         """
+
+        if not self.chunks or not query or not query.strip():
+            return []
 
         query_tokens = query.lower().split()
 

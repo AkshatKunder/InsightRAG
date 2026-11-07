@@ -5,6 +5,11 @@ from app.rag.retriever import Retriever
 from app.rag.query_expander import expand_query
 
 
+BM25_WEIGHT = 0.4
+VECTOR_WEIGHT = 0.6
+RRF_RANK_CONSTANT = 60
+
+
 class HybridRetriever:
 
     def __init__(self, pdf_path="data/documents/annual_report.pdf"):
@@ -33,6 +38,8 @@ class HybridRetriever:
         )
 
         combined = {}
+        seen_bm25_keys = set()
+        seen_vector_keys = set()
 
         # -----------------------------------
         # BM25
@@ -48,6 +55,10 @@ class HybridRetriever:
                 result["page"],
                 result["text"]
             )
+
+            if key in seen_bm25_keys:
+                continue
+            seen_bm25_keys.add(key)
 
             if key not in combined:
 
@@ -70,7 +81,7 @@ class HybridRetriever:
             combined[key]["bm25_rank"] = rank
 
             combined[key]["rrf_score"] += (
-                0.4 / (60 + rank)
+                BM25_WEIGHT / (RRF_RANK_CONSTANT + rank)
             )
 
         # -----------------------------------
@@ -87,6 +98,10 @@ class HybridRetriever:
                 result["page"],
                 result["text"]
             )
+
+            if key in seen_vector_keys:
+                continue
+            seen_vector_keys.add(key)
 
             if key not in combined:
 
@@ -109,7 +124,7 @@ class HybridRetriever:
             combined[key]["vector_rank"] = rank
 
             combined[key]["rrf_score"] += (
-                0.6 / (60 + rank)
+                VECTOR_WEIGHT / (RRF_RANK_CONSTANT + rank)
             )
 
         # -----------------------------------

@@ -83,11 +83,19 @@ def main():
         )
 
         print("\nCitation Validation:")
-        print("Status:", "SUPPORTED" if validation["is_valid"] else "UNSUPPORTED")
+        print("Status:", validation["overall_status"])
         print("Reason:", validation["reason"])
 
-        if not validation["is_valid"]:
-            print("Unsupported numbers:", validation.get("unsupported_numbers", []))
+        print("\nClaim Validation:")
+        if validation["claims"]:
+            for claim in validation["claims"]:
+                location = ""
+                if claim["source"]:
+                    location = f" ({claim['source']} — Page {claim['page']})"
+                print(f"- [{claim['status']}] {claim['claim_text']}{location}")
+                print(f"  {claim['explanation']}")
+        else:
+            print("No factual claims were extracted from the answer.")
 
         print("\nSelected Evidence:")
 
