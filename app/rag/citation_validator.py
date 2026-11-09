@@ -9,6 +9,13 @@ import re
 from typing import Any
 
 _NUMBER_RE = re.compile(r"(?<![\w.])(?P<currency>[$€£]|usd\s+|eur\s+|dollars?\s+)?(?P<value>\d[\d,]*(?:\.\d+)?)\s*(?P<scale>million|millions|billion|billions|thousand|thousands|bn|m|k)?(?P<percent>%|percent)?(?!\w)", re.I)
+_TABLE_UNIT_RE = re.compile(
+    r"\(\s*(?:in\s+)?(?:(?P<prefix_currency>[$€£]|usd|eur|dollars?|euros?)\s+)?"
+    r"(?P<scale>millions?|billions?|thousands?|bn|m|k)"
+    r"(?:\s+of)?(?:\s+(?P<suffix_currency>u\.?s\.?\s*dollars?|usd|eur|dollars?|euros?))?"
+    r"(?=\s*(?:,|\)))",
+    re.I,
+)
 _YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 _WORD_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9-]*")
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -17,6 +24,15 @@ _STOPWORDS = {"a", "an", "and", "approximately", "as", "at", "by", "for", "from"
 _ALIASES = {"employees": "employee", "employee": "employee", "workforce": "employee", "fte": "employee", "sales": "sales", "sale": "sales", "revenue": "sales", "countries": "country", "country": "country", "operations": "operation", "operating": "operation", "steelmaking": "steel-making", "remuneration": "remuneration", "compensation": "remuneration"}
 _METRIC_TERMS = {"employee", "sales", "country", "operation", "steel-making", "remuneration"}
 _NON_FACTUAL = re.compile(r"^(?:i\s+(?:could not|cannot|can't)|sorry\b|unknown\b)", re.I)
+_TABLE_HEADER_DISTANCE = 600
+_FOLLOWING_TABLE_CAPTION_DISTANCE = 3000
+_TRANSACTION_RE = re.compile(
+    r"\b(?:sale|disposal|divestiture|divestment)\s+of\s+(?:the\s+)?"
+    r"(?:[a-z-]+\s+){0,4}(?:facility|plant|assets?|business|operations?)\b"
+    r"|\b(?:facility|plant|assets?|business|operations?)\s+"
+    r"(?:sale|disposal|divestiture|divestment)\b",
+    re.I,
+)
 
 
 def _words(text: str) -> set[str]:
@@ -26,19 +42,60 @@ def _words(text: str) -> set[str]:
 def _quantity(match: re.Match[str]) -> dict[str, Any]:
     scale = (match.group("scale") or "").lower()
     value = float(match.group("value").replace(",", ""))
-    return {"raw": match.group(0).strip(), "value": value, "base_value": value * _SCALES.get(scale, 1), "scale": scale or None, "currency": bool((match.group("currency") or "").strip()), "percent": bool(match.group("percent"))}
+    return {"raw": match.group(0).strip(), "value": value, "base_value": value * _SCALES.get(scale, 1), "scale": scale or None, "currency": _currency_kind(match.group("currency")), "percent": bool(match.group("percent"))}
 
 
-def _quantities(text: str, exclude_years: bool = True) -> list[dict[str, Any]]:
+def _currency_kind(value: str | None) -> str | None:
+    """Normalize the limited currency forms recognized by the number parser."""
+    currency = (value or "").strip().lower().replace(".", "")
+    if not currency:
+        return None
+    if currency in {"$", "usd", "dollar", "dollars", "us dollar", "us dollars"}:
+        return "USD"
+    if currency in {"€", "eur", "euro", "euros"}:
+        return "EUR"
+    if currency == "£":
+        return "GBP"
+    return currency.upper()
+
+
+def _table_unit_for_position(text: str, position: int) -> tuple[str | None, str | None]:
+    """Find an explicit nearby table heading/caption for a bare table cell."""
+    all_headers = list(_TABLE_UNIT_RE.finditer(text))
+    headers = [match for match in all_headers if match.end() <= position]
+    header = headers[-1] if headers and position - headers[-1].end() <= _TABLE_HEADER_DISTANCE else None
+    if header is None:
+        following = next((match for match in all_headers if match.start() >= position), None)
+        line_start = text.rfind("\n", 0, position) + 1
+        line_end = text.find("\n", position)
+        line = text[line_start:] if line_end == -1 else text[line_start:line_end]
+        if following and following.start() - position <= _FOLLOWING_TABLE_CAPTION_DISTANCE and ({"sales", "total"} & _words(line)):
+            header = following
+    if header is None:
+        return None, None
+    currency = _currency_kind(header.group("prefix_currency") or header.group("suffix_currency"))
+    return (header.group("scale") or "").lower() or None, currency
+
+
+def _quantities(text: str, exclude_years: bool = True, inherit_table_units: bool = False) -> list[dict[str, Any]]:
     values = []
     for match in _NUMBER_RE.finditer(text):
         quantity = _quantity(match)
         # Reports often write the currency after the value and scale
         # (for example, "61,352 million dollars").
-        if not quantity["currency"] and re.match(r"\s*(?:usd|eur|dollars?|euros?)\b", text[match.end():], re.I):
-            quantity["currency"] = True
+        if not quantity["currency"]:
+            suffix = re.match(r"\s*(usd|eur|dollars?|euros?)\b", text[match.end():], re.I)
+            if suffix:
+                quantity["currency"] = _currency_kind(suffix.group(1))
         if exclude_years and not quantity["scale"] and not quantity["currency"] and not quantity["percent"] and _YEAR_RE.fullmatch(match.group("value")):
             continue
+        if inherit_table_units and not quantity["scale"] and not quantity["currency"]:
+            inherited_scale, inherited_currency = _table_unit_for_position(text, match.start())
+            if inherited_scale:
+                quantity["scale"] = inherited_scale
+                quantity["base_value"] = quantity["value"] * _SCALES.get(inherited_scale, 1)
+            if inherited_currency:
+                quantity["currency"] = inherited_currency
         values.append(quantity)
     return values
 
@@ -103,11 +160,10 @@ def _metric_match(claim_words: set[str], evidence_words: set[str]) -> tuple[bool
     return False, "The passage has no meaningful claim-context overlap."
 
 
-def _context_conflict(claim_words: set[str], evidence_words: set[str]) -> str | None:
+def _context_conflict(claim_words: set[str], evidence_text: str) -> str | None:
     """Reject a narrower transaction metric masquerading as a company total."""
-    transaction_terms = {"facility", "plant", "asset", "divestiture", "disposal"}
     if "sales" in claim_words and ("total" in claim_words or "company" in claim_words):
-        if transaction_terms & evidence_words:
+        if _TRANSACTION_RE.search(evidence_text):
             return "The passage describes a facility or asset transaction, not total company sales."
     return None
 
@@ -117,7 +173,7 @@ def _evaluate_claim(claim: dict[str, Any], citation: dict[str, Any]) -> tuple[st
     if not text.strip():
         return "INSUFFICIENT_EVIDENCE", "The selected evidence passage is empty."
     claim_words, evidence_words = set(claim["metric"]), _words(text)
-    conflict = _context_conflict(claim_words, evidence_words)
+    conflict = _context_conflict(claim_words, text)
     if conflict:
         return "UNSUPPORTED", conflict
     metric_ok, metric_reason = _metric_match(claim_words, evidence_words)
@@ -130,7 +186,7 @@ def _evaluate_claim(claim: dict[str, Any], citation: dict[str, Any]) -> tuple[st
         evidence_entities = _entities(text)
         if evidence_entities and not set(claim["entity"]) & evidence_entities:
             return "UNSUPPORTED", "The passage identifies a different entity."
-    value_ok, value_reason = _quantity_match(claim["quantities"], _quantities(text))
+    value_ok, value_reason = _quantity_match(claim["quantities"], _quantities(text, inherit_table_units=True))
     if not value_ok:
         return "UNSUPPORTED", value_reason
     return "SUPPORTED", f"{metric_reason} {value_reason}"

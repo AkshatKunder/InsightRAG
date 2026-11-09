@@ -161,3 +161,64 @@ def test_claim_extraction_includes_non_numeric_claims():
     claims = extract_claims("Steel-making operations were present in Europe.")
     assert claims[0]["value"] is None
     assert "operation" in claims[0]["metric"]
+
+
+def test_total_sales_remain_supported_with_later_property_plant_note():
+    result = validate_citation("ArcelorMittal's total sales in 2025 were $61,352 million.", [
+        {"text": "Total sales were $61.4 billion in 2025. Cost of sales included impairment of property, plant and equipment."}
+    ])
+
+    assert result["is_valid"] is True
+
+
+def test_sales_to_external_customers_table_is_not_an_asset_transaction():
+    result = validate_citation("ArcelorMittal's total sales in 2025 were $61,352 million.", [
+        {"text": "(millions of U.S. dollars)\nSales to external customers 61,352\nImpairment includes property, plant and equipment."}
+    ])
+
+    assert result["is_valid"] is True
+
+
+def test_geographic_sales_table_with_divestment_footnote_is_supported():
+    result = validate_citation("ArcelorMittal's total sales in 2025 were $61,352 million.", [
+        {"text": "Year ended December 31, 2025\n(in $ millions)\nSales by destination\nTotal 61,352\nA divestment of ArcelorMittal Temirtau was completed in 2023."}
+    ])
+
+    assert result["is_valid"] is True
+
+
+def test_table_value_inherits_usd_millions_from_heading():
+    result = validate_citation("Total sales were $61,352 million.", [
+        {"text": "(in millions of U.S. dollars)\nTotal sales 61,352"}
+    ])
+
+    assert result["is_valid"] is True
+
+
+def test_sales_table_value_inherits_a_following_financial_caption():
+    result = validate_citation("Total sales were $61,352 million.", [
+        {"text": "Sales to external customers 61,352\n(millions of U.S. dollars, except share data)"}
+    ])
+
+    assert result["is_valid"] is True
+
+
+def test_explicit_facility_sale_remains_unsupported():
+    result = validate_citation("Total company sales were $61,352 million in 2025.", [
+        {"text": "The sale of a manufacturing facility generated $61,352 million in 2025."}
+    ])
+
+    assert result["overall_status"] == "UNSUPPORTED"
+    assert "facility or asset transaction" in result["claims"][0]["explanation"]
+
+
+def test_table_value_with_incorrect_value_or_scale_remains_unsupported():
+    wrong_value = validate_citation("Total sales were $61,352 million.", [
+        {"text": "(in $ millions)\nTotal sales 60,000"}
+    ])
+    wrong_scale = validate_citation("Total sales were $61,352 million.", [
+        {"text": "(in $ thousands)\nTotal sales 61,352"}
+    ])
+
+    assert wrong_value["overall_status"] == "UNSUPPORTED"
+    assert wrong_scale["overall_status"] == "UNSUPPORTED"

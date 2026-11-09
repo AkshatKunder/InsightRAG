@@ -9,6 +9,9 @@ class Reranker:
         self.model = CrossEncoder(MODEL_NAME)
 
     def rerank(self, query, documents, top_k=5):
+        if not documents:
+            return []
+
         pairs = [[query, document["text"]] for document in documents]
 
         scores = self.model.predict(pairs)
