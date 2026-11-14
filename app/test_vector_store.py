@@ -39,6 +39,10 @@ def mocked_store(monkeypatch: pytest.MonkeyPatch):
         def create_collection(self, **kwargs):
             calls["create_collection"] = kwargs
 
+        def delete_collection(self, **kwargs):
+            calls["delete_collection"] = kwargs
+            self.collections = []
+
         def upsert(self, **kwargs):
             calls["upsert"] = kwargs
 
@@ -78,6 +82,25 @@ def test_create_collection_does_not_recreate_existing_collection(mocked_store):
     store.create_collection()
 
     assert "create_collection" not in calls
+
+
+def test_reset_collection_deletes_existing_collection_then_recreates(mocked_store):
+    store, calls = mocked_store
+    store.client.collections = [SimpleNamespace(name=vector_store.COLLECTION_NAME)]
+
+    store.reset_collection()
+
+    assert calls["delete_collection"] == {"collection_name": vector_store.COLLECTION_NAME}
+    assert calls["create_collection"]["collection_name"] == vector_store.COLLECTION_NAME
+
+
+def test_reset_collection_creates_when_missing_without_deleting(mocked_store):
+    store, calls = mocked_store
+
+    store.reset_collection()
+
+    assert "delete_collection" not in calls
+    assert calls["create_collection"]["collection_name"] == vector_store.COLLECTION_NAME
 
 
 def test_add_documents_creates_points_with_vectors_and_metadata(mocked_store):

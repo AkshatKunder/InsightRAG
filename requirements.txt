@@ -5,3 +5,7 @@ python-dotenv
 requests
 pytest
 pypdf
+sentence-transformers
+qdrant-client>=1.10
+rank-bm25
+ollama

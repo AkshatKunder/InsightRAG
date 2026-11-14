@@ -1,31 +1,61 @@
 # InsightRAG
 
-A lightweight RAG-based application project structure for building document-based retrieval and generation workflows.
+A local hybrid RAG assistant for question answering over a PDF, with
+claim-level citation validation.
+
+Pipeline: PDF → word chunks → BM25 + vector search (Qdrant, `bge-small-en-v1.5`)
+fused with weighted RRF → cross-encoder reranking → answer from a local Ollama
+model → evidence selection and claim validation.
 
 ## Project structure
 
-- `app/` – application source code
-- `data/documents/` – local documents for ingestion or indexing
-- `tests/` – application tests
-- `.env` – environment variables
-- `requirements.txt` – Python dependencies
+- `app/main.py` – interactive CLI question loop
+- `app/ingest.py` – builds the Qdrant index from a PDF
+- `app/rag/` – loader, chunker, retrievers, reranker, generator, citation selection/validation
+- `scripts/` – retrieval diagnostics
+- `data/documents/` – local PDFs (not committed)
+- `data/qdrant/` – local vector index (not committed)
 
-## Quick start
+## Setup
 
-1. Create a virtual environment:
+1. Create and activate a virtual environment:
    ```bash
    python -m venv .venv
-   ```
-2. Activate it:
-   ```bash
    .venv\Scripts\activate
    ```
-3. Install dependencies:
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-4. Add your environment variables in `.env`.
+3. Install [Ollama](https://ollama.com) and pull the generation model:
+   ```bash
+   ollama pull llama3.2:3b
+   ```
+4. Put the document at `data/documents/annual_report.pdf`.
 
-## Notes
+The embedding and reranker models are downloaded from Hugging Face on first use.
 
-This is the initial scaffold for the InsightRAG project. You can extend it with indexing, chunking, retrievers, embeddings, and API routes as needed.
+## Usage
+
+Build (or rebuild) the index. This replaces any existing collection:
+
+```bash
+python -m app.ingest
+```
+
+Options: `--pdf <path>` and `--qdrant-path <dir>`.
+
+Start the assistant (Ollama must be running):
+
+```bash
+python -m app.main
+```
+
+## Tests
+
+```bash
+python -m pytest
+```
+
+Tests marked `integration` load real models and are skipped by default; run
+them with `python -m pytest -m integration`.

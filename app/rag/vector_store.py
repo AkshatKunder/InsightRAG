@@ -33,6 +33,22 @@ class VectorStore:
         else:
             print(f"Collection already exists: {COLLECTION_NAME}")
 
+    def reset_collection(self):
+        """
+        Drop the collection (if present) and create it empty.
+
+        Point IDs are sequential chunk indexes, so re-indexing into an existing
+        collection could leave stale points behind when the chunk count shrinks.
+        """
+
+        collections = self.client.get_collections().collections
+
+        if COLLECTION_NAME in [collection.name for collection in collections]:
+            self.client.delete_collection(collection_name=COLLECTION_NAME)
+            print(f"Deleted existing collection: {COLLECTION_NAME}")
+
+        self.create_collection()
+
     def add_documents(self, chunks, embeddings):
         """
         Store document chunks, embeddings, and metadata in Qdrant.
