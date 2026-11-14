@@ -5,6 +5,7 @@ numbers from unrelated passages from being combined into fabricated support.
 """
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
 
@@ -24,6 +25,16 @@ _STOPWORDS = {"a", "an", "and", "approximately", "as", "at", "by", "for", "from"
 _ALIASES = {"employees": "employee", "employee": "employee", "workforce": "employee", "fte": "employee", "sales": "sales", "sale": "sales", "revenue": "sales", "countries": "country", "country": "country", "operations": "operation", "operating": "operation", "steelmaking": "steel-making", "remuneration": "remuneration", "compensation": "remuneration"}
 _METRIC_TERMS = {"employee", "sales", "country", "operation", "steel-making", "remuneration"}
 _NON_FACTUAL = re.compile(r"^(?:i\s+(?:could not|cannot|can't)|sorry\b|unknown\b)", re.I)
+_ABSTENTION_RE = re.compile(
+    r"\b(?:could not|cannot|can't|unable to)\s+(?:find|determine|locate|be determined)\b"
+    r"|\bnot\s+(?:found|available|mentioned|provided)\s+in\s+the\s+(?:provided\s+)?(?:document|context)\b",
+    re.I,
+)
+# A lowercase word right after a bare number marks a prose quantity such as
+# "14 countries"; table cells are followed by other numbers or row labels.
+_PROSE_FOLLOWER_RE = re.compile(r"[ \t]*[a-z]")
+_COUNTED_NOUN_WINDOW = 4
+_MAX_ROUNDING_FRACTION = 0.05
 _TABLE_HEADER_DISTANCE = 600
 _FOLLOWING_TABLE_CAPTION_DISTANCE = 3000
 _TRANSACTION_RE = re.compile(
@@ -42,7 +53,32 @@ def _words(text: str) -> set[str]:
 def _quantity(match: re.Match[str]) -> dict[str, Any]:
     scale = (match.group("scale") or "").lower()
     value = float(match.group("value").replace(",", ""))
-    return {"raw": match.group(0).strip(), "value": value, "base_value": value * _SCALES.get(scale, 1), "scale": scale or None, "currency": _currency_kind(match.group("currency")), "percent": bool(match.group("percent"))}
+    return {"raw": match.group(0).strip(), "value": value, "precision": _precision(match.group("value")), "base_value": value * _SCALES.get(scale, 1), "scale": scale or None, "currency": _currency_kind(match.group("currency")), "percent": bool(match.group("percent"))}
+
+
+def _precision(raw_value: str) -> float:
+    """Rounding step a written number implies: "61.4" -> 0.1, "125,000" -> 1000.
+
+    Trailing zeros of an integer are ambiguous ("100" may be exact), so the
+    implied step is capped at 5% of the value.
+    """
+    digits = raw_value.replace(",", "")
+    if "." in digits:
+        return 10.0 ** -len(digits.split(".", 1)[1])
+    trailing_zeros = len(digits) - len(digits.rstrip("0"))
+    if trailing_zeros == len(digits):
+        return 1.0
+    step = 10.0 ** trailing_zeros
+    cap = abs(float(digits)) * _MAX_ROUNDING_FRACTION
+    return max(1.0, min(step, 10.0 ** int(math.log10(cap)) if cap >= 1 else 1.0))
+
+
+def _values_match(claim: dict[str, Any], evidence: dict[str, Any]) -> bool:
+    """Values agree once rounded to the coarser of the two written precisions."""
+    claim_step = claim["precision"] * claim["base_value"] / claim["value"] if claim["value"] else claim["precision"]
+    evidence_step = evidence["precision"] * evidence["base_value"] / evidence["value"] if evidence["value"] else evidence["precision"]
+    step = max(claim_step, evidence_step)
+    return abs(claim["base_value"] - evidence["base_value"]) <= step / 2 + 1e-9 * max(abs(claim["base_value"]), 1.0)
 
 
 def _currency_kind(value: str | None) -> str | None:
@@ -77,6 +113,37 @@ def _table_unit_for_position(text: str, position: int) -> tuple[str | None, str 
     return (header.group("scale") or "").lower() or None, currency
 
 
+def _following_terms(text: str, position: int) -> list[str]:
+    """Return the normalized words directly after a number, stopping at the next number."""
+    terms = []
+    for token in re.finditer(r"\d[\d,.]*|[a-zA-Z][a-zA-Z0-9-]*", text[position:position + 120]):
+        if token.group(0)[0].isdigit() or len(terms) >= _COUNTED_NOUN_WINDOW:
+            break
+        word = token.group(0).lower()
+        terms.append(_ALIASES.get(word, word))
+    return terms
+
+
+def _counted_metric(quantity: dict[str, Any]) -> str | None:
+    """Metric noun a bare count directly refers to, e.g. "14 countries" -> "country"."""
+    if quantity["currency"] or quantity["percent"] or quantity["scale"]:
+        return None
+    following = quantity.get("following_terms") or []
+    if following and following[0] in _METRIC_TERMS:
+        return following[0]
+    return None
+
+
+def is_abstention(answer: str | None) -> bool:
+    """Return whether the answer declines to answer instead of stating facts."""
+    text = (answer or "").strip()
+    if not text or not (_NON_FACTUAL.match(text) or _ABSTENTION_RE.search(text)):
+        return False
+    # A hedge that still states a figure ("could not find X, but sales were 5")
+    # makes a factual claim and must be validated, not treated as abstention.
+    return not _quantities(text)
+
+
 def _quantities(text: str, exclude_years: bool = True, inherit_table_units: bool = False) -> list[dict[str, Any]]:
     values = []
     for match in _NUMBER_RE.finditer(text):
@@ -89,7 +156,14 @@ def _quantities(text: str, exclude_years: bool = True, inherit_table_units: bool
                 quantity["currency"] = _currency_kind(suffix.group(1))
         if exclude_years and not quantity["scale"] and not quantity["currency"] and not quantity["percent"] and _YEAR_RE.fullmatch(match.group("value")):
             continue
-        if inherit_table_units and not quantity["scale"] and not quantity["currency"]:
+        quantity["following_terms"] = _following_terms(text, match.end())
+        if (
+            inherit_table_units
+            and not quantity["scale"]
+            and not quantity["currency"]
+            and not quantity["percent"]
+            and not _PROSE_FOLLOWER_RE.match(text, match.end())
+        ):
             inherited_scale, inherited_currency = _table_unit_for_position(text, match.start())
             if inherited_scale:
                 quantity["scale"] = inherited_scale
@@ -122,14 +196,18 @@ def _entities(text: str) -> set[str]:
 
 def extract_claims(answer: str) -> list[dict[str, Any]]:
     """Extract declarative answer sentences and available comparison attributes."""
-    if not answer or not answer.strip() or _NON_FACTUAL.match(answer.strip()):
+    if not answer or not answer.strip() or is_abstention(answer):
         return []
     claims = []
     for sentence in _SENTENCE_RE.split(answer.strip()):
         sentence = sentence.strip(" -\t")
-        if not sentence or _NON_FACTUAL.match(sentence):
+        if not sentence:
             continue
         quantities, words = _quantities(sentence), _words(sentence)
+        # "I could not find X" is not a claim, but "I could not find X, but
+        # sales were $70 billion" still asserts a figure.
+        if _NON_FACTUAL.match(sentence) and not quantities:
+            continue
         if not quantities and len(words) < 2:
             continue
         claims.append({"claim_text": sentence, "entity": sorted(_entities(sentence)), "metric": sorted(words), "value": quantities[0]["value"] if quantities else None, "unit_or_scale": quantities[0]["scale"] if quantities else None, "quantities": quantities, "period": sorted(set(_YEAR_RE.findall(sentence))), "context": " ".join(sorted(words))})
@@ -142,11 +220,14 @@ def _quantity_match(claim_values: list[dict[str, Any]], evidence_values: list[di
     if not evidence_values:
         return False, "The passage contains no comparable numerical value."
     for claim in claim_values:
+        counted = _counted_metric(claim)
         for evidence in evidence_values:
             if claim["percent"] != evidence["percent"] or claim["currency"] != evidence["currency"]:
                 continue
-            tolerance = max(abs(claim["base_value"]), abs(evidence["base_value"]), 1.0) * 0.01
-            if abs(claim["base_value"] - evidence["base_value"]) <= tolerance:
+            # "14 countries" is not supported by "14 research sites in 9 countries".
+            if counted and counted not in evidence.get("following_terms", []):
+                continue
+            if _values_match(claim, evidence):
                 return True, "Numerical value and scale are consistent."
     return False, "No passage value matches the claim value, unit type, and scale."
 
@@ -208,6 +289,8 @@ def validate_citation(answer: str, citations: list[dict[str, Any]] | None) -> di
     The legacy ``is_valid`` and ``reason`` keys remain available; structured claim
     results also expose source/page and explanations for each decision.
     """
+    if is_abstention(answer):
+        return {**_result([], "The answer declines to answer: the document context did not contain the information."), "overall_status": "ABSTAINED"}
     claims = extract_claims(answer)
     if not citations:
         results = [{**claim, "status": "INSUFFICIENT_EVIDENCE", "source": None, "page": None, "explanation": "No citations were selected."} for claim in claims]

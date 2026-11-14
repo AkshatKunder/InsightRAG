@@ -86,6 +86,10 @@ def main():
         print("Status:", validation["overall_status"])
         print("Reason:", validation["reason"])
 
+        if validation["overall_status"] == "ABSTAINED":
+            print("\n" + "-" * 70 + "\n")
+            continue
+
         print("\nClaim Validation:")
         if validation["claims"]:
             for claim in validation["claims"]:

@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from app.rag.citation_validator import is_abstention
+
 
 _TOKEN_PATTERN = re.compile(r"[a-zA-Z][a-zA-Z0-9-]*|\d+(?:,\d{3})*(?:\.\d+)?")
 _NUMBER_PATTERN = re.compile(
@@ -28,6 +30,7 @@ _UNIT_MULTIPLIERS = {
     "thousand": 1_000,
     "k": 1_000,
 }
+_PENALTY_WINDOW = 150
 
 
 @dataclass(frozen=True)
@@ -151,10 +154,40 @@ def _compute_period_consistency(question: str, answer: str, chunk_text: str) -> 
     return 1.0 if periods & _tokens(chunk_text) else 0.5
 
 
+def _is_year_key(key: str) -> bool:
+    value, _, unit = key.partition(":")
+    return not unit and re.fullmatch(r"(?:19|20)\d{2}", value) is not None
+
+
+def _answer_number_windows(answer: str, chunk_text: str) -> str | None:
+    """Return the text surrounding answer numbers found in the chunk, if any.
+
+    Chunks are several hundred words long, so a mismatched context word
+    elsewhere in the chunk (a footnote about a divestment, a sentence about
+    customers) says little about the passage that actually states the answer.
+    """
+    # Years appear throughout financial text, so they are not useful anchors.
+    answer_keys = [key for key in _extract_numbers_with_context(answer) if not _is_year_key(key)]
+    if not answer_keys:
+        return None
+    windows = []
+    for match in _NUMBER_PATTERN.finditer(chunk_text):
+        raw_value, raw_unit = match.groups()
+        key = f"{float(raw_value.replace(',', '')):g}:{_normalize_unit(raw_unit)}"
+        if any(_numbers_equivalent(key, answer_key) for answer_key in answer_keys):
+            start = max(0, match.start() - _PENALTY_WINDOW)
+            windows.append(chunk_text[start:match.end() + _PENALTY_WINDOW])
+    return " ... ".join(windows) or None
+
+
 def _apply_contextual_penalty(question: str, chunk_text: str, answer: str) -> float:
-    """Penalize known mismatched contexts without document-specific rules."""
+    """Penalize known mismatched contexts without document-specific rules.
+
+    When the chunk contains the answer's number, only the text around that
+    number is inspected; otherwise the whole chunk is.
+    """
     question_lower = question.lower()
-    text = chunk_text.lower()
+    text = (_answer_number_windows(answer, chunk_text) or chunk_text).lower()
 
     if any(term in question_lower for term in ("sales", "revenue", "income")):
         if ("sale of" in text and any(word in text for word in ("facility", "plant", "asset"))) or "divest" in text:
@@ -189,6 +222,8 @@ def select_citations(
 ) -> list[dict[str, Any]]:
     """Select direct, de-duplicated evidence without document-specific rules."""
     if not question or not answer or not retrieved_chunks or max_sources <= 0:
+        return []
+    if is_abstention(answer):
         return []
 
     cfg = config or DEFAULT_CONFIG
