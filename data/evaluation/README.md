@@ -216,3 +216,39 @@ For a substantive change (rewording questions, changing answers), create
   rounding that is consistent with the exact value.
 - **Coverage.** Only three unanswerable questions, and no ambiguous or
   adversarial questions (e.g. false premises) yet.
+
+## Phase 3 evaluation
+
+Phase 3 adds a shared pipeline (`app/rag/pipeline.py`, used by `app/main.py`).
+It provides scope-aware chunk context (`app/rag/document_context.py`, with
+charts recovered by `app/rag/chart_extractor.py`), a scope-aware prompt,
+multi-hop sub-queries (`app/rag/multihop.py`), metric/scope/arithmetic checks
+in the citation validator (`app/rag/scope_validation.py`), abstention when
+every claim contradicts the evidence, and optional Ollama `temperature`/`seed`.
+`PipelineConfig.legacy()` reproduces the Phase 2 behaviour.
+
+```bash
+python scripts/evaluate_answers.py --pipeline phase2 --temperature 0 --seed 42 --repeats 1 --output-dir data/evaluation/results/phase3/baseline_phase2_pipeline --report-dir data/evaluation/phase3/baseline_phase2_pipeline
+python scripts/evaluate_answers.py --pipeline phase3 --temperature 0 --seed 42 --repeats 2 --output-dir data/evaluation/results/phase3/phase3_pipeline --report-dir data/evaluation/phase3/phase3_pipeline
+python scripts/build_phase3_report.py
+```
+
+Phase 2 results in `results/` are left untouched. The comparison is written to
+[phase3_evaluation_report.md](phase3_evaluation_report.md) and
+`results/phase3/phase3_comparison.json`.
+
+## Phase 3.1 evaluation
+
+Phase 3.1 adds query rewriting for year-over-year changes and company
+definitions (`app/rag/query_rewriter.py`), arithmetic computed from evidence
+values (`app/rag/calculation.py`), and completeness checks for list and
+definition answers (`app/rag/completeness.py`). `PipelineConfig.phase3()`
+reproduces Phase 3.
+
+```bash
+python scripts/evaluate_answers.py --pipeline phase3_1 --temperature 0 --seed 42 --repeats 2 --output-dir data/evaluation/results/phase3_1/phase3_1_pipeline --report-dir data/evaluation/phase3_1/phase3_1_pipeline
+python scripts/build_phase3_1_report.py
+```
+
+Report: [phase3_1_evaluation_report.md](phase3_1_evaluation_report.md). JSON:
+`results/phase3_1/`.

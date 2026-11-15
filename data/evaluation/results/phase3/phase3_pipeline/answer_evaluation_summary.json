@@ -1,0 +1,715 @@
+{
+  "timestamp": "2026-11-15T16:12:44+00:00",
+  "runs_timestamp": "2026-11-15T16:12:43+00:00",
+  "benchmarks": {
+    "v2": "benchmark_v2.json",
+    "v1": "benchmark_v1.json"
+  },
+  "config": {
+    "repeats": 2,
+    "retrieve_top_k": 20,
+    "retrieve_candidate_k": 50,
+    "context_size": 5,
+    "max_citations": 3,
+    "pdf": "annual_report.pdf",
+    "llm": "llama3.2:3b",
+    "llm_options": {
+      "temperature": 0.0,
+      "seed": 42
+    },
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "pipeline_variant": "phase3",
+    "pipeline_config": {
+      "retrieve_top_k": 20,
+      "candidate_k": 50,
+      "context_size": 5,
+      "max_citations": 3,
+      "scope_context": true,
+      "multihop": true,
+      "question_aware_validation": true,
+      "revise_on_contradiction": true,
+      "abstain_on_contradiction": true
+    },
+    "pipeline": "app/rag/pipeline.py (phase3): hybrid top 20 from 50 -> rerank top 5 -> generate -> select_citations(3) -> validate_citation",
+    "generation": {
+      "model": "llama3.2:3b",
+      "options": {
+        "temperature": 0.0,
+        "seed": 42
+      },
+      "options_applied": true,
+      "scope_aware_prompt": true
+    }
+  },
+  "errors": [],
+  "v2": {
+    "num_runs": 2,
+    "metrics": {
+      "answerable": {
+        "n": {
+          "mean": 22,
+          "min": 22,
+          "max": 22
+        },
+        "answer_accuracy": {
+          "mean": 0.8182,
+          "min": 0.8182,
+          "max": 0.8182
+        },
+        "correct_or_partial_rate": {
+          "mean": 0.9091,
+          "min": 0.9091,
+          "max": 0.9091
+        },
+        "false_abstention_rate": {
+          "mean": 0.0455,
+          "min": 0.0455,
+          "max": 0.0455
+        },
+        "error_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "mean_completeness": {
+          "mean": 0.8144,
+          "min": 0.8144,
+          "max": 0.8144
+        },
+        "citation_precision_micro": {
+          "mean": 0.4068,
+          "min": 0.4068,
+          "max": 0.4068
+        },
+        "citation_precision_macro": {
+          "mean": 0.4286,
+          "min": 0.4286,
+          "max": 0.4286
+        },
+        "citation_fact_recall": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "answers_without_citations": {
+          "mean": 0,
+          "min": 0,
+          "max": 0
+        },
+        "matched_numeric_fact_citation_support": {
+          "mean": 0.7778,
+          "min": 0.7778,
+          "max": 0.7778
+        },
+        "supported_claim_rate": {
+          "mean": 0.7778,
+          "min": 0.7778,
+          "max": 0.7778
+        },
+        "unsupported_claim_rate": {
+          "mean": 0.0556,
+          "min": 0.0556,
+          "max": 0.0556
+        },
+        "insufficient_evidence_claim_rate": {
+          "mean": 0.1667,
+          "min": 0.1667,
+          "max": 0.1667
+        },
+        "answers_with_numbers_not_in_citations": {
+          "mean": 2,
+          "min": 2,
+          "max": 2
+        },
+        "answers_with_numbers_not_in_context": {
+          "mean": 2,
+          "min": 2,
+          "max": 2
+        },
+        "context_fact_recall": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "unanswerable": {
+        "n": {
+          "mean": 3,
+          "min": 3,
+          "max": 3
+        },
+        "correct_abstention_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "false_answer_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "citations_shown_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "answers_with_invented_numbers": {
+          "mean": 0,
+          "min": 0,
+          "max": 0
+        },
+        "error_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "by_category": {
+      "factual": {
+        "accuracy": {
+          "mean": 0.6,
+          "min": 0.6,
+          "max": 0.6
+        },
+        "correct_or_partial": {
+          "mean": 0.8,
+          "min": 0.8,
+          "max": 0.8
+        },
+        "completeness": {
+          "mean": 0.7,
+          "min": 0.7,
+          "max": 0.7
+        }
+      },
+      "numerical": {
+        "accuracy": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "financial": {
+        "accuracy": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "comparative": {
+        "accuracy": {
+          "mean": 0.75,
+          "min": 0.75,
+          "max": 0.75
+        },
+        "correct_or_partial": {
+          "mean": 0.75,
+          "min": 0.75,
+          "max": 0.75
+        },
+        "completeness": {
+          "mean": 0.625,
+          "min": 0.625,
+          "max": 0.625
+        }
+      },
+      "multi_hop": {
+        "accuracy": {
+          "mean": 0.6667,
+          "min": 0.6667,
+          "max": 0.6667
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 0.6389,
+          "min": 0.6389,
+          "max": 0.6389
+        }
+      }
+    },
+    "answerable_stability": [
+      {
+        "id": "Q001",
+        "category": "factual",
+        "labels": [
+          "incorrect",
+          "incorrect"
+        ],
+        "majority": "incorrect",
+        "stable": true
+      },
+      {
+        "id": "Q002",
+        "category": "factual",
+        "labels": [
+          "partially_correct",
+          "partially_correct"
+        ],
+        "majority": "partially_correct",
+        "stable": true
+      },
+      {
+        "id": "Q003",
+        "category": "factual",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q004",
+        "category": "factual",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q005",
+        "category": "factual",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q006",
+        "category": "numerical",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q007",
+        "category": "numerical",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q008",
+        "category": "numerical",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q009",
+        "category": "numerical",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q010",
+        "category": "numerical",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q011",
+        "category": "financial",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q012",
+        "category": "financial",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q013",
+        "category": "financial",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q014",
+        "category": "financial",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q015",
+        "category": "financial",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q016",
+        "category": "comparative",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q017",
+        "category": "comparative",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q018",
+        "category": "comparative",
+        "labels": [
+          "abstained",
+          "abstained"
+        ],
+        "majority": "abstained",
+        "stable": true
+      },
+      {
+        "id": "Q019",
+        "category": "comparative",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q020",
+        "category": "multi_hop",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q021",
+        "category": "multi_hop",
+        "labels": [
+          "correct",
+          "correct"
+        ],
+        "majority": "correct",
+        "stable": true
+      },
+      {
+        "id": "Q022",
+        "category": "multi_hop",
+        "labels": [
+          "partially_correct",
+          "partially_correct"
+        ],
+        "majority": "partially_correct",
+        "stable": true
+      }
+    ],
+    "unanswerable_stability": [
+      {
+        "id": "Q023",
+        "abstained": [
+          true,
+          true
+        ],
+        "stable": true
+      },
+      {
+        "id": "Q024",
+        "abstained": [
+          true,
+          true
+        ],
+        "stable": true
+      },
+      {
+        "id": "Q025",
+        "abstained": [
+          true,
+          true
+        ],
+        "stable": true
+      }
+    ],
+    "stable_questions": 22
+  },
+  "v1": {
+    "metrics": {
+      "answerable": {
+        "n": {
+          "mean": 22,
+          "min": 22,
+          "max": 22
+        },
+        "answer_accuracy": {
+          "mean": 0.8182,
+          "min": 0.8182,
+          "max": 0.8182
+        },
+        "correct_or_partial_rate": {
+          "mean": 0.9091,
+          "min": 0.9091,
+          "max": 0.9091
+        },
+        "false_abstention_rate": {
+          "mean": 0.0455,
+          "min": 0.0455,
+          "max": 0.0455
+        },
+        "error_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "mean_completeness": {
+          "mean": 0.8144,
+          "min": 0.8144,
+          "max": 0.8144
+        },
+        "citation_precision_micro": {
+          "mean": 0.4068,
+          "min": 0.4068,
+          "max": 0.4068
+        },
+        "citation_precision_macro": {
+          "mean": 0.4286,
+          "min": 0.4286,
+          "max": 0.4286
+        },
+        "citation_fact_recall": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "answers_without_citations": {
+          "mean": 0,
+          "min": 0,
+          "max": 0
+        },
+        "matched_numeric_fact_citation_support": {
+          "mean": 0.7778,
+          "min": 0.7778,
+          "max": 0.7778
+        },
+        "supported_claim_rate": {
+          "mean": 0.7778,
+          "min": 0.7778,
+          "max": 0.7778
+        },
+        "unsupported_claim_rate": {
+          "mean": 0.0556,
+          "min": 0.0556,
+          "max": 0.0556
+        },
+        "insufficient_evidence_claim_rate": {
+          "mean": 0.1667,
+          "min": 0.1667,
+          "max": 0.1667
+        },
+        "answers_with_numbers_not_in_citations": {
+          "mean": 2,
+          "min": 2,
+          "max": 2
+        },
+        "answers_with_numbers_not_in_context": {
+          "mean": 2,
+          "min": 2,
+          "max": 2
+        },
+        "context_fact_recall": {
+          "mean": 0.9545,
+          "min": 0.9545,
+          "max": 0.9545
+        }
+      },
+      "unanswerable": {
+        "n": {
+          "mean": 3,
+          "min": 3,
+          "max": 3
+        },
+        "correct_abstention_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "false_answer_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "citations_shown_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "answers_with_invented_numbers": {
+          "mean": 0,
+          "min": 0,
+          "max": 0
+        },
+        "error_rate": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "by_category": {
+      "factual": {
+        "accuracy": {
+          "mean": 0.6,
+          "min": 0.6,
+          "max": 0.6
+        },
+        "correct_or_partial": {
+          "mean": 0.8,
+          "min": 0.8,
+          "max": 0.8
+        },
+        "completeness": {
+          "mean": 0.7,
+          "min": 0.7,
+          "max": 0.7
+        }
+      },
+      "numerical": {
+        "accuracy": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "financial": {
+        "accuracy": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "comparative": {
+        "accuracy": {
+          "mean": 0.75,
+          "min": 0.75,
+          "max": 0.75
+        },
+        "correct_or_partial": {
+          "mean": 0.75,
+          "min": 0.75,
+          "max": 0.75
+        },
+        "completeness": {
+          "mean": 0.625,
+          "min": 0.625,
+          "max": 0.625
+        }
+      },
+      "multi_hop": {
+        "accuracy": {
+          "mean": 0.6667,
+          "min": 0.6667,
+          "max": 0.6667
+        },
+        "correct_or_partial": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "completeness": {
+          "mean": 0.6389,
+          "min": 0.6389,
+          "max": 0.6389
+        }
+      }
+    }
+  }
+}

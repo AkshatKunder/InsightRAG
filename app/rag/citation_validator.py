@@ -9,6 +9,8 @@ import math
 import re
 from typing import Any
 
+from app.rag.scope_validation import apply_chart_units, apply_label_units, arithmetic_issue, is_date_part, scope_metric_conflict
+
 _NUMBER_RE = re.compile(r"(?<![\w.])(?P<currency>[$€£]|usd\s+|eur\s+|dollars?\s+)?(?P<value>\d[\d,]*(?:\.\d+)?)\s*(?P<scale>million|millions|billion|billions|thousand|thousands|bn|m|k)?(?P<percent>%|percent)?(?!\w)", re.I)
 _TABLE_UNIT_RE = re.compile(
     r"\(\s*(?:in\s+)?(?:(?P<prefix_currency>[$€£]|usd|eur|dollars?|euros?)\s+)?"
@@ -157,6 +159,7 @@ def _quantities(text: str, exclude_years: bool = True, inherit_table_units: bool
         if exclude_years and not quantity["scale"] and not quantity["currency"] and not quantity["percent"] and _YEAR_RE.fullmatch(match.group("value")):
             continue
         quantity["following_terms"] = _following_terms(text, match.end())
+        quantity["start"] = match.start("value")
         if (
             inherit_table_units
             and not quantity["scale"]
@@ -232,6 +235,74 @@ def _quantity_match(claim_values: list[dict[str, Any]], evidence_values: list[di
     return False, "No passage value matches the claim value, unit type, and scale."
 
 
+def _matching_evidence(
+    claim_values: list[dict[str, Any]],
+    evidence_values: list[dict[str, Any]],
+    claim_text: str = "",
+    evidence_text: str = "",
+) -> list[dict[str, Any]]:
+    """Every passage quantity that would satisfy ``_quantity_match`` for some claim value.
+
+    Dates (years, days of a month) on either side are ignored: they are not the
+    reported figure and would otherwise "match" unrelated passages.
+    """
+    matches = []
+    for claim in claim_values:
+        if claim_text and is_date_part(claim_text, claim.get("start", 0), claim.get("raw", "")):
+            continue
+        counted = _counted_metric(claim)
+        for evidence in evidence_values:
+            if evidence_text and is_date_part(evidence_text, evidence.get("start", 0), evidence.get("raw", "")):
+                continue
+            if claim["percent"] != evidence["percent"] or claim["currency"] != evidence["currency"]:
+                continue
+            if counted and counted not in evidence.get("following_terms", []):
+                continue
+            if _values_match(claim, evidence) and evidence not in matches:
+                matches.append(evidence)
+    return matches
+
+
+def _supported_by(quantity: dict[str, Any], claim: dict[str, Any], citations: list[dict[str, Any]], question: str | None) -> bool:
+    for citation in citations:
+        text = str(citation.get("text") or "")
+        evidence_values = apply_label_units(text, apply_chart_units(citation, _quantities(text, inherit_table_units=True)))
+        matches = _matching_evidence([quantity], evidence_values, claim["claim_text"], text)
+        if any(scope_metric_conflict(claim["claim_text"], set(claim["period"]), citation, text, e, question) is None for e in matches):
+            return True
+    return False
+
+
+def _derived(quantity: dict[str, Any], others: list[dict[str, Any]]) -> bool:
+    """Is ``quantity`` a difference, percentage change or ratio of two other claim values?"""
+    target = abs(quantity["base_value"])
+    tolerance = max(_precision(quantity.get("raw", "").strip("$€£ ()%").split()[0] if quantity.get("raw") else "1") * (quantity["base_value"] / quantity["value"] if quantity["value"] else 1), 1e-9) * 0.5
+    for a in others:
+        for b in others:
+            if a is b or not a["base_value"]:
+                continue
+            candidates = [abs(a["base_value"] - b["base_value"]), abs(a["base_value"] / b["base_value"]) if b["base_value"] else None]
+            if quantity["percent"]:
+                candidates = [abs(a["base_value"] - b["base_value"]) / abs(b["base_value"]) * 100]
+            for value in candidates:
+                if value is not None and abs(value - target) <= tolerance + 0.02 * target:
+                    return True
+    return False
+
+
+def _unsupported_value(claim: dict[str, Any], citations: list[dict[str, Any]], question: str | None) -> str | None:
+    """Every reported number in a claim needs its own support (Phase 3); derived values are allowed."""
+    values = [q for q in claim["quantities"] if not is_date_part(claim["claim_text"], q.get("start", 0), q.get("raw", ""))]
+    if len(values) < 2:
+        return None
+    supported = [q for q in values if _supported_by(q, claim, citations, question)]
+    for quantity in values:
+        if quantity in supported or _derived(quantity, supported):
+            continue
+        return f"Unsupported value: {quantity['raw']} is not supported by any cited passage for this metric and scope."
+    return None
+
+
 def _metric_match(claim_words: set[str], evidence_words: set[str]) -> tuple[bool, str]:
     overlap = claim_words & evidence_words
     if (claim_words & _METRIC_TERMS) and not (claim_words & _METRIC_TERMS & evidence_words):
@@ -249,7 +320,7 @@ def _context_conflict(claim_words: set[str], evidence_text: str) -> str | None:
     return None
 
 
-def _evaluate_claim(claim: dict[str, Any], citation: dict[str, Any]) -> tuple[str, str]:
+def _evaluate_claim(claim: dict[str, Any], citation: dict[str, Any], question: str | None = None) -> tuple[str, str]:
     text = str(citation.get("text") or "")
     if not text.strip():
         return "INSUFFICIENT_EVIDENCE", "The selected evidence passage is empty."
@@ -267,9 +338,19 @@ def _evaluate_claim(claim: dict[str, Any], citation: dict[str, Any]) -> tuple[st
         evidence_entities = _entities(text)
         if evidence_entities and not set(claim["entity"]) & evidence_entities:
             return "UNSUPPORTED", "The passage identifies a different entity."
-    value_ok, value_reason = _quantity_match(claim["quantities"], _quantities(text, inherit_table_units=True))
+    evidence_values = apply_label_units(text, apply_chart_units(citation, _quantities(text, inherit_table_units=True)))
+    value_ok, value_reason = _quantity_match(claim["quantities"], evidence_values)
     if not value_ok:
         return "UNSUPPORTED", value_reason
+    if claim["quantities"]:
+        # The same number must also be the same measure and reporting scope (Phase 3).
+        matches = _matching_evidence(claim["quantities"], evidence_values, claim["claim_text"], text)
+        conflicts = [
+            scope_metric_conflict(claim["claim_text"], set(claim["period"]), citation, text, evidence, question)
+            for evidence in matches
+        ]
+        if matches and all(conflicts):
+            return "UNSUPPORTED", conflicts[0]
     return "SUPPORTED", f"{metric_reason} {value_reason}"
 
 
@@ -283,11 +364,14 @@ def _result(claims: list[dict[str, Any]], reason: str | None = None) -> dict[str
     return {"is_valid": valid, "overall_status": "SUPPORTED" if valid else ("UNSUPPORTED" if unsupported else "INSUFFICIENT_EVIDENCE"), "reason": reason, "claims": claims, "supported_claims": supported, "unsupported_claims": unsupported, "insufficient_evidence_claims": insufficient, "unsupported_numbers": sorted({str(q["value"]) for claim in unsupported for q in claim["quantities"]})}
 
 
-def validate_citation(answer: str, citations: list[dict[str, Any]] | None) -> dict[str, Any]:
+def validate_citation(answer: str, citations: list[dict[str, Any]] | None, question: str | None = None) -> dict[str, Any]:
     """Validate factual answer claims against individual citation passages.
 
     The legacy ``is_valid`` and ``reason`` keys remain available; structured claim
     results also expose source/page and explanations for each decision.
+    ``question`` (optional) lets a segment or measure named in the question
+    justify citing segment-level or qualified figures. A supported claim whose
+    own change arithmetic is inconsistent ("from A to B, up Y%") is UNSUPPORTED.
     """
     if is_abstention(answer):
         return {**_result([], "The answer declines to answer: the document context did not contain the information."), "overall_status": "ABSTAINED"}
@@ -299,7 +383,7 @@ def validate_citation(answer: str, citations: list[dict[str, Any]] | None) -> di
         return _result([], "The answer contains no factual claims to validate.")
     results = []
     for claim in claims:
-        evaluations = [_evaluate_claim(claim, citation) for citation in citations]
+        evaluations = [_evaluate_claim(claim, citation, question) for citation in citations]
         matched = next((index for index, (status, _) in enumerate(evaluations) if status == "SUPPORTED"), None)
         if matched is None:
             matched = next((index for index, (status, _) in enumerate(evaluations) if status == "UNSUPPORTED"), None)
@@ -307,5 +391,9 @@ def validate_citation(answer: str, citations: list[dict[str, Any]] | None) -> di
             status, explanation, citation = "INSUFFICIENT_EVIDENCE", "No individual evidence passage sufficiently supports this claim.", None
         else:
             status, explanation, citation = *evaluations[matched], citations[matched]
+        if status == "SUPPORTED":
+            issue = arithmetic_issue(claim["claim_text"], claim["quantities"]) or _unsupported_value(claim, citations, question)
+            if issue:
+                status, explanation = "UNSUPPORTED", issue
         results.append({**claim, "status": status, "source": citation.get("source", "Unknown source") if citation else None, "page": citation.get("page") if citation else None, "explanation": explanation})
     return _result(results)

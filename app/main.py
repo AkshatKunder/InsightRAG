@@ -1,8 +1,4 @@
-from app.rag.hybrid_retriever import HybridRetriever
-from app.rag.reranker import Reranker
-from app.rag.generator import Generator
-from app.rag.citation_selector import select_citations
-from app.rag.citation_validator import validate_citation
+from app.rag.pipeline import build_pipeline
 
 
 def main():
@@ -11,10 +7,10 @@ def main():
     print("InsightRAG - Hybrid RAG Assistant")
     print("=" * 70)
 
-    # Initialize components
-    retriever = HybridRetriever()
-    reranker = Reranker()
-    generator = Generator()
+    # Initialize components. The shared pipeline (app/rag/pipeline.py) runs
+    # hybrid retrieval (multi-hop aware) -> reranking -> scope-aware generation
+    # -> evidence selection -> scope-aware citation validation.
+    pipeline = build_pipeline()
 
     print("\nSystem ready.")
     print("Ask questions about the annual report.")
@@ -30,34 +26,10 @@ def main():
         if not question:
             continue
 
-        # --------------------------------
-        # Step 1: Hybrid Retrieval
-        # --------------------------------
-
-        results = retriever.search(
-            question,
-            top_k=20,
-            candidate_k=50
-        )
-
-        # --------------------------------
-        # Step 2: Reranking
-        # --------------------------------
-
-        reranked_results = reranker.rerank(
-            question,
-            results,
-            top_k=5
-        )
-
-        # --------------------------------
-        # Step 3: Generate Answer
-        # --------------------------------
-
-        answer = generator.generate(
-            question,
-            reranked_results
-        )
+        result = pipeline.answer(question)
+        answer = result["answer"]
+        citations = result["citations"]
+        validation = result["validation"]
 
         # --------------------------------
         # Display Answer
@@ -66,21 +38,9 @@ def main():
         print("\nAnswer:")
         print(answer)
 
-        citations = select_citations(
-            question=question,
-            answer=answer,
-            retrieved_chunks=reranked_results,
-            max_sources=3,
-        )
-
         # --------------------------------
-        # Step 4: Citation Validation
+        # Citation Validation
         # --------------------------------
-
-        validation = validate_citation(
-            answer=answer,
-            citations=citations
-        )
 
         print("\nCitation Validation:")
         print("Status:", validation["overall_status"])
@@ -113,7 +73,7 @@ def main():
         print("\n" + "-" * 70 + "\n")
 
     # Clean up Qdrant
-    retriever.vector_retriever.vector_store.close()
+    pipeline.retriever.vector_retriever.vector_store.close()
 
 
 if __name__ == "__main__":

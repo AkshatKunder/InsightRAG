@@ -38,6 +38,10 @@ class PipelineComponents:
     select_citations: Callable[[str, str, list], Sequence[Mapping]]
     validate: Callable[[str, list], Mapping]
     description: dict = field(default_factory=dict)
+    # Optional whole-pipeline callable (app.rag.pipeline.RAGPipeline.answer). When
+    # set, it replaces the step callables above and must return a dict with
+    # answer/context/citations/validation (plus optional sub_queries/rejected).
+    answer_question: Callable[[str], Mapping] | None = None
 
 
 def _chunk(item: Mapping, keep_text: bool = True) -> dict:
@@ -46,6 +50,10 @@ def _chunk(item: Mapping, keep_text: bool = True) -> dict:
         value = item.get(key)
         if value is not None:
             out[key] = float(value)
+    # Phase 3 scope metadata, kept so saved runs can be re-validated offline.
+    for key in ("scope", "section", "sections", "chart", "sub_query"):
+        if key in item:
+            out[key] = item[key]
     if keep_text:
         out["text"] = item.get("text", "")
     return out
@@ -73,6 +81,32 @@ def _validation(result: Mapping) -> dict:
 
 def run_question(question: str, components: PipelineComponents) -> dict:
     record = {"answer": None, "context": [], "citations": [], "validation": None, "error": None, "timings": {}}
+    if components.answer_question is not None:
+        try:
+            start = time.perf_counter()
+            result = components.answer_question(question)
+            record["timings"]["total_s"] = round(time.perf_counter() - start, 3)
+            record["answer"] = result["answer"]
+            record["context"] = [_chunk(item) for item in result.get("context", [])]
+            record["citations"] = [_chunk(item) for item in result.get("citations", [])]
+            record["validation"] = _validation(result["validation"])
+            record["sub_queries"] = list(result.get("sub_queries") or [question])
+            if result.get("calculation"):
+                record["calculation"] = result["calculation"]
+            if (result.get("validation") or {}).get("completeness"):
+                record["completeness"] = result["validation"]["completeness"]
+            revision = result.get("revision")
+            if revision:
+                record["revised_from"] = revision["original_answer"]
+                record["revision_reasons"] = list(revision.get("problems", []))
+            rejected = result.get("rejected")
+            if rejected:
+                record["rejected_answer"] = rejected["answer"]
+                record["rejected_validation"] = _validation(rejected["validation"])
+        except Exception as error:  # recorded explicitly, never skipped
+            logger.exception("pipeline failed for %r", question)
+            record["error"] = f"{type(error).__name__}: {error}"
+        return record
     try:
         start = time.perf_counter()
         candidates = list(components.retrieve(question))

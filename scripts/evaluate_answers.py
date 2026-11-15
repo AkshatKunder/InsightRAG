@@ -55,32 +55,32 @@ EVAL_DIR = PROJECT_ROOT / "data" / "evaluation"
 DEFAULT_PDF = PROJECT_ROOT / "data" / "documents" / "annual_report.pdf"
 
 
-def build_components(pdf_path: Path) -> tuple[PipelineComponents, callable]:
-    from app.rag.citation_selector import select_citations
-    from app.rag.citation_validator import validate_citation
-    from app.rag.generator import MODEL_NAME, Generator
-    from app.rag.hybrid_retriever import HybridRetriever
-    from app.rag.reranker import MODEL_NAME as RERANKER_MODEL
-    from app.rag.reranker import Reranker
+def build_components(pdf_path: Path, pipeline: str = "phase3", options: dict | None = None) -> tuple[PipelineComponents, callable]:
+    """The shared production pipeline (app/rag/pipeline.py), in its Phase 3 or Phase 2 (legacy) configuration."""
 
-    retriever = HybridRetriever(pdf_path=str(pdf_path))
-    reranker = Reranker()
-    generator = Generator()
+    from app.rag.generator import MODEL_NAME
+    from app.rag.pipeline import PipelineConfig, build_pipeline
+    from app.rag.reranker import MODEL_NAME as RERANKER_MODEL
+
+    config = {"phase2": PipelineConfig.legacy, "phase3": PipelineConfig.phase3}.get(pipeline, PipelineConfig)()
+    rag = build_pipeline(str(pdf_path), config, generation_options=options)
+    unused = lambda *a, **k: None  # noqa: E731  (answer_question replaces the step callables)
     components = PipelineComponents(
-        retrieve=lambda q: retriever.search(q, top_k=RETRIEVE_TOP_K, candidate_k=RETRIEVE_CANDIDATE_K),
-        rerank=lambda q, docs: reranker.rerank(q, docs, top_k=CONTEXT_SIZE),
-        generate=generator.generate,
-        select_citations=lambda q, a, ctx: select_citations(question=q, answer=a, retrieved_chunks=ctx, max_sources=MAX_CITATIONS),
-        validate=validate_citation,
+        retrieve=unused, rerank=unused, generate=unused, select_citations=unused, validate=unused,
+        answer_question=rag.answer,
         description={
             "pdf": pdf_path.name,
             "llm": MODEL_NAME,
-            "llm_options": "production defaults (no temperature/seed override)",
+            "llm_options": options or "production defaults (no temperature/seed override)",
             "reranker_model": RERANKER_MODEL,
-            "pipeline": "app/main.py: hybrid top 20 -> rerank top 5 -> generate -> select_citations(3) -> validate_citation",
+            "pipeline_variant": pipeline,
+            "pipeline_config": rag.settings()["pipeline"],
+            "pipeline": f"app/rag/pipeline.py ({pipeline}): hybrid top {RETRIEVE_TOP_K} from {RETRIEVE_CANDIDATE_K} -> "
+                        f"rerank top {CONTEXT_SIZE} -> generate -> select_citations({MAX_CITATIONS}) -> validate_citation",
         },
     )
-    return components, retriever.vector_retriever.vector_store.close
+    components.settings = rag.settings  # generation settings, read after the run
+    return components, rag.retriever.vector_retriever.vector_store.close
 
 
 def grade(benchmark: dict, runs: dict) -> dict:
@@ -349,9 +349,14 @@ def parse_args(argv=None):
     parser.add_argument("--output-dir", type=Path, default=EVAL_DIR / "results")
     parser.add_argument("--report-dir", type=Path, default=EVAL_DIR)
     parser.add_argument("--runs", type=Path, help="Re-grade an existing answer_runs.json instead of running the pipeline")
+    parser.add_argument("--pipeline", choices=("phase3_1", "phase3", "phase2"), default="phase3_1",
+                        help="phase3_1 = current pipeline; phase3 = Phase 3 configuration; phase2 = legacy configuration")
+    parser.add_argument("--temperature", type=float, help="Ollama temperature (default: production setting)")
+    parser.add_argument("--seed", type=int, help="Ollama seed (default: production setting)")
     args = parser.parse_args(argv)
     if args.repeats < 1:
         parser.error("--repeats must be >= 1")
+    args.options = {k: v for k, v in (("temperature", args.temperature), ("seed", args.seed)) if v is not None} or None
     return args
 
 
@@ -360,11 +365,13 @@ def _dump(path: Path, data) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def main(argv=None, components_factory=build_components) -> int:
+def main(argv=None, components_factory=None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     args = parse_args(argv)
     primary, baseline = load_benchmark(args.benchmark), load_benchmark(args.baseline_benchmark)
     os.chdir(PROJECT_ROOT)
+    if components_factory is None:
+        components_factory = lambda pdf: build_components(pdf, args.pipeline, args.options)  # noqa: E731
 
     if args.runs:
         runs = json.loads(args.runs.read_text(encoding="utf-8"))
@@ -375,6 +382,9 @@ def main(argv=None, components_factory=build_components) -> int:
         finally:
             close()
         runs["timestamp"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        if hasattr(components, "settings"):
+            # Generation settings as actually applied (options_applied is False if Ollama rejected them).
+            runs["config"]["generation"] = components.settings()["generation"]
         _dump(args.output_dir / "answer_runs.json", runs)
 
     graded = grade(primary, runs)

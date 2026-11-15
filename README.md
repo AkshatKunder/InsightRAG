@@ -51,6 +51,19 @@ Start the assistant (Ollama must be running):
 python -m app.main
 ```
 
+### Structured data (CSV / Excel) and natural language to SQL
+
+Load CSV or `.xlsx` files into a local SQLite database, then ask questions that are routed to the
+document, the data, or both:
+
+```bash
+python scripts/create_sample_datasets.py
+python -m app.assistant --ingest data/structured/samples/segment_kpis.csv data/structured/samples/steel_orders_sample.xlsx
+python -m app.assistant --ask "What is the total order revenue per customer region in the orders data?"
+```
+
+Generated SQL is validated and executed read-only; see [docs/structured_data.md](docs/structured_data.md).
+
 ## Tests
 
 ```bash

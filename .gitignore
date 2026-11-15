@@ -13,3 +13,7 @@ data/qdrant/
 
 # Local/private documents
 data/documents/
+
+# Local structured-data database (Phase 4)
+data/structured/*.db
+data/structured/*.db-*
