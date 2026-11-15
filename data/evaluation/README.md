@@ -149,6 +149,15 @@ benchmark with Recall@K, Precision@K and MRR. It writes results to `results/`.
 See [retrieval_evaluation.md](retrieval_evaluation.md) for the metric
 definitions, the relevance rules and their limitations.
 
+`python scripts/compare_retrieval.py` compares BM25, vector and hybrid
+retrieval, each before and after cross-encoder reranking, on benchmark v2
+(primary) and v1 (baseline). It writes
+[retrieval_strategy_comparison.md](retrieval_strategy_comparison.md),
+[reranker_evaluation.md](reranker_evaluation.md), SVG charts in `charts/`,
+and JSON in `results/`. The raw rankings are saved to
+`results/retrieval_runs.json`, so they can be re-scored without models:
+`python scripts/compare_retrieval.py --runs data/evaluation/results/retrieval_runs.json`.
+
 ## Adding questions
 
 1. Find the fact in the PDF and note the physical page number (use `load_pdf`
