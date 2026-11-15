@@ -158,6 +158,27 @@ and JSON in `results/`. The raw rankings are saved to
 `results/retrieval_runs.json`, so they can be re-scored without models:
 `python scripts/compare_retrieval.py --runs data/evaluation/results/retrieval_runs.json`.
 
+## Answer, citation, numerical and abstention evaluation
+
+`python scripts/evaluate_answers.py` runs the full production pipeline
+(hybrid → rerank → llama3.2:3b → citation selection → claim validation; needs
+Ollama) on every question three times. It grades the outputs
+deterministically against benchmark v2, with no LLM judge. Reports:
+[answer_quality_report.md](answer_quality_report.md),
+[numerical_evaluation.md](numerical_evaluation.md) and
+[abstention_report.md](abstention_report.md). Raw outputs are saved to
+`results/answer_runs.json`; re-grade them without models with
+`--runs data/evaluation/results/answer_runs.json`. The grading rules are in
+`app/evaluation/answer_checks.py`: value, unit, period and entity must all
+agree, so a matching number alone is not enough.
+
+## Phase 2 report
+
+`python scripts/build_phase2_report.py` builds
+[phase2_evaluation_report.md](phase2_evaluation_report.md) from the JSON
+results. Its qualitative sections come from the hand-written
+`phase2_findings.md`.
+
 ## Adding questions
 
 1. Find the fact in the PDF and note the physical page number (use `load_pdf`
