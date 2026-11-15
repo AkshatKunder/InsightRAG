@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" width="680" height="320" role="img" aria-label="MRR before and after reranking (benchmark v2)" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<rect width="680" height="320" fill="#fcfcfb"/>
+<text x="52" y="22" font-size="14" font-weight="600" fill="#1f1f1e">MRR before and after reranking (benchmark v2)</text>
+<rect x="52" y="32" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="66" y="41" font-size="11" fill="#5f5e58">Before</text>
+<rect x="126" y="32" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="140" y="41" font-size="11" fill="#5f5e58">After (production rerank)</text>
+<rect x="333" y="32" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="347" y="41" font-size="11" fill="#5f5e58">Cross-encoder only</text>
+<line x1="52" x2="664" y1="276.0" y2="276.0" stroke="#e4e3de" stroke-width="1"/>
+<text x="46" y="280.0" font-size="10" text-anchor="end" fill="#5f5e58">0.00</text>
+<line x1="52" x2="664" y1="221.0" y2="221.0" stroke="#e4e3de" stroke-width="1"/>
+<text x="46" y="225.0" font-size="10" text-anchor="end" fill="#5f5e58">0.25</text>
+<line x1="52" x2="664" y1="166.0" y2="166.0" stroke="#e4e3de" stroke-width="1"/>
+<text x="46" y="170.0" font-size="10" text-anchor="end" fill="#5f5e58">0.50</text>
+<line x1="52" x2="664" y1="111.0" y2="111.0" stroke="#e4e3de" stroke-width="1"/>
+<text x="46" y="115.0" font-size="10" text-anchor="end" fill="#5f5e58">0.75</text>
+<line x1="52" x2="664" y1="56.0" y2="56.0" stroke="#e4e3de" stroke-width="1"/>
+<text x="46" y="60.0" font-size="10" text-anchor="end" fill="#5f5e58">1.00</text>
+<text x="12" y="166.0" font-size="10" fill="#5f5e58" transform="rotate(-90 12 166.0)" text-anchor="middle">MRR</text>
+<path d="M110.0,276.0 V136.4 Q110.0,132.4 114.0,132.4 H134.0 Q138.0,132.4 138.0,136.4 V276.0 Z" fill="#2a78d6"><title>BM25 · Before: 0.653</title></path>
+<path d="M140.0,276.0 V129.8 Q140.0,125.8 144.0,125.8 H164.0 Q168.0,125.8 168.0,129.8 V276.0 Z" fill="#eb6834"><title>BM25 · After (production rerank): 0.683</title></path>
+<path d="M170.0,276.0 V134.0 Q170.0,130.0 174.0,130.0 H194.0 Q198.0,130.0 198.0,134.0 V276.0 Z" fill="#1baf7a"><title>BM25 · Cross-encoder only: 0.664</title></path>
+<text x="154.0" y="294.0" font-size="11" text-anchor="middle" fill="#5f5e58">BM25</text>
+<path d="M314.0,276.0 V164.5 Q314.0,160.5 318.0,160.5 H338.0 Q342.0,160.5 342.0,164.5 V276.0 Z" fill="#2a78d6"><title>Vector · Before: 0.525</title></path>
+<path d="M344.0,276.0 V152.2 Q344.0,148.2 348.0,148.2 H368.0 Q372.0,148.2 372.0,152.2 V276.0 Z" fill="#eb6834"><title>Vector · After (production rerank): 0.581</title></path>
+<path d="M374.0,276.0 V160.9 Q374.0,156.9 378.0,156.9 H398.0 Q402.0,156.9 402.0,160.9 V276.0 Z" fill="#1baf7a"><title>Vector · Cross-encoder only: 0.541</title></path>
+<text x="358.0" y="294.0" font-size="11" text-anchor="middle" fill="#5f5e58">Vector</text>
+<path d="M518.0,276.0 V123.3 Q518.0,119.3 522.0,119.3 H542.0 Q546.0,119.3 546.0,123.3 V276.0 Z" fill="#2a78d6"><title>Hybrid (RRF) · Before: 0.712</title></path>
+<path d="M548.0,276.0 V124.2 Q548.0,120.2 552.0,120.2 H572.0 Q576.0,120.2 576.0,124.2 V276.0 Z" fill="#eb6834"><title>Hybrid (RRF) · After (production rerank): 0.708</title></path>
+<path d="M578.0,276.0 V155.7 Q578.0,151.7 582.0,151.7 H602.0 Q606.0,151.7 606.0,155.7 V276.0 Z" fill="#1baf7a"><title>Hybrid (RRF) · Cross-encoder only: 0.565</title></path>
+<text x="562.0" y="294.0" font-size="11" text-anchor="middle" fill="#5f5e58">Hybrid (RRF)</text>
+<line x1="52" x2="664" y1="276.0" y2="276.0" stroke="#5f5e58" stroke-width="1"/>
+</svg>
