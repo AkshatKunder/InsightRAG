@@ -130,6 +130,13 @@ exists, the excerpt check. Use `--no-pdf` to skip the PDF, or pass another file:
 The validator does not judge whether an answer is semantically correct; that
 was done by hand as described above.
 
+## Retrieval evaluation
+
+`python scripts/evaluate_retrieval.py` scores the retrieval stage against this
+benchmark with Recall@K, Precision@K and MRR. It writes results to `results/`.
+See [retrieval_evaluation.md](retrieval_evaluation.md) for the metric
+definitions, the relevance rules and their limitations.
+
 ## Adding questions
 
 1. Find the fact in the PDF and note the physical page number (use `load_pdf`
