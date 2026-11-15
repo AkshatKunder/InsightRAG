@@ -131,7 +131,7 @@ they are excluded from every average. The summary reports
   shipments (54.0 / 54.3 Mt) and iron ore production (48.8 / 42.4 Mt), but
   Q017 and Q018 list only page 95, so page 3 is not credited for them (the
   same facts do list page 3 in Q009 and Q022). Benchmark v1 is left unchanged;
-  the fix is proposed for a v2.
+  `benchmark_v2.json` adds page 3 for these facts (see `benchmark_v2_changes.md`).
 - **Precision is low when the retriever returns K pages.** Most questions have
   1–3 relevant pages, so a retriever that returns 10 distinct pages cannot
   score above about 0.1–0.3 Precision@10. Compare precision between
