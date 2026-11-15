@@ -1,0 +1,445 @@
+{
+  "benchmark_name": "InsightRAG Annual Report Benchmark v2",
+  "version": "2.0",
+  "created": "2026-11-15",
+  "derived_from": "benchmark_v1.json",
+  "changes_from_v1": [
+    {
+      "questions": ["Q017", "Q018"],
+      "change": "Added page 3 to expected_facts[].pages for both the 2025 and 2024 facts, and added alternative_evidence excerpts from page 3. expected_pages stays [95]; page 95 remains the primary evidence.",
+      "reason": "The page 3 'Company overview' KPI bar chart states the same values (steel shipments 54.0 Mt 2025 / 54.3 Mt 2024; iron ore production 48.8 Mt 2025 / 42.4 Mt 2024). v1 already listed page 3 for the same facts in Q009 (iron ore 2025) and Q022 (shipments 2025) but not in Q017/Q018. The value-to-metric-and-year mapping was verified from the chart's drawing instructions (bar geometry, legend swatches, ToUnicode-decoded labels) with scripts/verify_chart_mapping.py, because pypdf's extracted text alone does not show which value belongs to which bar."
+    }
+  ],
+  "source_document": "annual_report.pdf",
+  "source_description": "ArcelorMittal Annual Report 2025",
+  "document_pages": 294,
+  "page_numbering": "Physical PDF page index starting at 1, identical to the 'page' field produced by app.rag.loader.load_pdf. The PDF has 294 pages, 291 of which contain extractable text.",
+  "total_questions": 25,
+  "categories": [
+    "factual",
+    "numerical",
+    "financial",
+    "comparative",
+    "multi_hop",
+    "unanswerable"
+  ],
+  "category_counts": {
+    "factual": 5,
+    "numerical": 5,
+    "financial": 5,
+    "comparative": 4,
+    "multi_hop": 3,
+    "unanswerable": 3
+  },
+  "questions": [
+    {
+      "id": "Q001",
+      "category": "factual",
+      "question": "What is ArcelorMittal's primary business?",
+      "answerable": true,
+      "expected_answer": "ArcelorMittal is one of the world's leading integrated steel and mining companies, producing finished and semi-finished steel products (flat, long and tubular) and mining products such as iron ore.",
+      "expected_pages": [3],
+      "supporting_evidence": [
+        {"page": 3, "excerpt": "ArcelorMittal is one of the world’s leading integrated steel and mining companies."},
+        {"page": 3, "excerpt": "ArcelorMittal produces a broad range of high-quality finished and semi-finished steel products"}
+      ],
+      "expected_facts": [
+        {"metric": "primary_business", "value": "integrated steel and mining company", "pages": [3]}
+      ]
+    },
+    {
+      "id": "Q002",
+      "category": "factual",
+      "question": "What are ArcelorMittal's reportable segments?",
+      "answerable": true,
+      "expected_answer": "Six reportable segments: North America, Brazil, Europe, India and JVs, Sustainable Solutions, and Mining (remaining operations are reported in \"Others\").",
+      "expected_pages": [59, 94, 201],
+      "supporting_evidence": [
+        {"page": 94, "excerpt": "ArcelorMittal reports its operations in six reportable segments: North America, Brazil, Europe, India and JVs, Sustainable Solutions and Mining"},
+        {"page": 59, "excerpt": "ArcelorMittal reports its business in the following six reportable segments corresponding to continuing activities: North America, Brazil, Europe, India and joint ventures (\"JVs\"), Sustainable Solutions and Mining."},
+        {"page": 201, "excerpt": "The Company is organized in six operating and reportable segments"}
+      ],
+      "expected_facts": [
+        {"metric": "reportable_segment_count", "value": 6, "unit": "segments", "pages": [59, 94, 201]},
+        {"metric": "reportable_segments", "value": ["North America", "Brazil", "Europe", "India and JVs", "Sustainable Solutions", "Mining"], "pages": [59, 94]}
+      ]
+    },
+    {
+      "id": "Q003",
+      "category": "factual",
+      "question": "Who is ArcelorMittal's Chief Executive Officer?",
+      "answerable": true,
+      "expected_answer": "Aditya Mittal.",
+      "expected_pages": [106, 107],
+      "supporting_evidence": [
+        {"page": 106, "excerpt": "Aditya Mittal8 49 June 2020 May 2026 Director and Chief Executive Officer"},
+        {"page": 107, "excerpt": "Aditya Mittal Chief Executive Officer (\"CEO\") 49 years old"}
+      ],
+      "expected_facts": [
+        {"metric": "chief_executive_officer", "value": "Aditya Mittal", "pages": [106, 107]}
+      ],
+      "notes": "Lakshmi N. Mittal is the Executive Chairman, not the CEO; an answer naming him is incorrect."
+    },
+    {
+      "id": "Q004",
+      "category": "factual",
+      "question": "Under the laws of which country was ArcelorMittal incorporated, and on what date?",
+      "answerable": true,
+      "expected_answer": "The Grand Duchy of Luxembourg, on June 8, 2001 (as a public limited liability company, société anonyme).",
+      "expected_pages": [3],
+      "supporting_evidence": [
+        {"page": 3, "excerpt": "ArcelorMittal is a public limited liability company (société anonyme) that was incorporated for an unlimited period under the laws of the Grand Duchy of Luxembourg on June 8, 2001."}
+      ],
+      "expected_facts": [
+        {"metric": "incorporation_country", "value": "Luxembourg", "pages": [3]},
+        {"metric": "incorporation_date", "value": "2001-06-08", "pages": [3]}
+      ]
+    },
+    {
+      "id": "Q005",
+      "category": "factual",
+      "question": "Which predecessor companies merged to form ArcelorMittal, and in which year?",
+      "answerable": true,
+      "expected_answer": "Mittal Steel Company N.V. and Arcelor, which merged in 2007.",
+      "expected_pages": [3],
+      "supporting_evidence": [
+        {"page": 3, "excerpt": "ArcelorMittal results from the merger in 2007 of its predecessor companies Mittal Steel Company N.V. and Arcelor"}
+      ],
+      "expected_facts": [
+        {"metric": "predecessor_companies", "value": ["Mittal Steel Company N.V.", "Arcelor"], "pages": [3]},
+        {"metric": "merger_year", "value": 2007, "pages": [3]}
+      ]
+    },
+    {
+      "id": "Q006",
+      "category": "numerical",
+      "question": "What were ArcelorMittal's total sales in 2025?",
+      "answerable": true,
+      "expected_answer": "$61,352 million (approximately $61.4 billion).",
+      "expected_pages": [95, 172],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Total 61,352 62,441 (1,089) (1.7) %"},
+        {"page": 95, "excerpt": "ArcelorMittal had sales of $61.4 billion in 2025"},
+        {"page": 172, "excerpt": "Sales 4.1 and 12.1 61,352 62,441 68,275"}
+      ],
+      "expected_facts": [
+        {"metric": "total_sales", "value": 61352, "unit": "USD million", "period": "2025", "pages": [95, 172]}
+      ],
+      "notes": "The page 95 table is headed '(in $ millions) Sales for the year ended December 31'. Segment sales on the same page (e.g. Europe 28,793) are not the total."
+    },
+    {
+      "id": "Q007",
+      "category": "numerical",
+      "question": "How many employees did ArcelorMittal have at the end of 2025?",
+      "answerable": true,
+      "expected_answer": "Approximately 125,554 full-time equivalent (FTE) employees as of December 31, 2025.",
+      "expected_pages": [3, 130],
+      "supporting_evidence": [
+        {"page": 130, "excerpt": "As of December 31, 2025, ArcelorMittal employed approximately 125,554 full time equivalent (\"FTE\") employees directly"},
+        {"page": 3, "excerpt": "As of December 31, 2025, ArcelorMittal had approximately 125,554 employees."}
+      ],
+      "expected_facts": [
+        {"metric": "employees_fte", "value": 125554, "unit": "FTE employees", "period": "2025-12-31", "pages": [3, 130]}
+      ]
+    },
+    {
+      "id": "Q008",
+      "category": "numerical",
+      "question": "What was ArcelorMittal's crude steel production in 2025?",
+      "answerable": true,
+      "expected_answer": "55.6 million tonnes.",
+      "expected_pages": [60, 3],
+      "supporting_evidence": [
+        {"page": 60, "excerpt": "Crude steel production by process in 2025 (in million tonnes)"},
+        {"page": 60, "excerpt": "Total 41.2 14.4 55.6 74.6"},
+        {"page": 3, "excerpt": "55.6 48.8 54.0 61.4 57.9 42.4 54.3 62.4 2025 2024 Crude steel production (million tonnes)"}
+      ],
+      "expected_facts": [
+        {"metric": "crude_steel_production", "value": 55.6, "unit": "million tonnes", "period": "2025", "pages": [60, 3]}
+      ],
+      "notes": "Page 60 table columns are BOF, EAF, Total, Achievable Capacity; 55.6 is the Total and 74.6 is capacity, not production. Page 3 is a KPI graphic whose extracted text loses the column layout."
+    },
+    {
+      "id": "Q009",
+      "category": "numerical",
+      "question": "What was ArcelorMittal's iron ore production in 2025?",
+      "answerable": true,
+      "expected_answer": "48.8 million tonnes.",
+      "expected_pages": [95, 3],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Iron ore production (million tonnes) 48.8 42.4 6.4 15.1 %"}
+      ],
+      "expected_facts": [
+        {"metric": "iron_ore_production", "value": 48.8, "unit": "million tonnes", "period": "2025", "pages": [95, 3]}
+      ],
+      "notes": "Production, not shipments. The page 3 KPI graphic shows the same value."
+    },
+    {
+      "id": "Q010",
+      "category": "numerical",
+      "question": "How much did ArcelorMittal spend on research and development (R&D expense) in 2025?",
+      "answerable": true,
+      "expected_answer": "$335 million (up from $285 million in 2024); a further $41 million of R&D was capitalized.",
+      "expected_pages": [29, 212],
+      "supporting_evidence": [
+        {"page": 29, "excerpt": "In 2025, ArcelorMittal’s R&D expense was $335 million (compared to $285 million and $299 million in 2024 and"},
+        {"page": 212, "excerpt": "These costs amounted to 335, 285 and 299 for the years ended December 31, 2025,"}
+      ],
+      "expected_facts": [
+        {"metric": "rd_expense", "value": 335, "unit": "USD million", "period": "2025", "pages": [29, 212]}
+      ],
+      "notes": "The $41 million capitalized R&D (page 30) is additional context, not part of the expensed figure."
+    },
+    {
+      "id": "Q011",
+      "category": "financial",
+      "question": "What was ArcelorMittal's operating income in 2025?",
+      "answerable": true,
+      "expected_answer": "$3,628 million (approximately $3.6 billion).",
+      "expected_pages": [95, 172],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Total 3,628 3,310 318 9.6 %"},
+        {"page": 172, "excerpt": "Operating income 3,628 3,310 2,340"}
+      ],
+      "expected_facts": [
+        {"metric": "operating_income", "value": 3628, "unit": "USD million", "period": "2025", "pages": [95, 172]}
+      ]
+    },
+    {
+      "id": "Q012",
+      "category": "financial",
+      "question": "What was ArcelorMittal's cost of sales in 2025?",
+      "answerable": true,
+      "expected_answer": "$56,976 million.",
+      "expected_pages": [172],
+      "supporting_evidence": [
+        {"page": 172, "excerpt": "Cost of sales 4.2 and 12.2 56,976 56,653 63,538"}
+      ],
+      "expected_facts": [
+        {"metric": "cost_of_sales", "value": 56976, "unit": "USD million", "period": "2025", "pages": [172]}
+      ],
+      "notes": "Consolidated Statements of Operations, in millions of U.S. dollars. 4.2 and 12.2 are note references, not values."
+    },
+    {
+      "id": "Q013",
+      "category": "financial",
+      "question": "What was ArcelorMittal's net income attributable to equity holders of the parent in 2025?",
+      "answerable": true,
+      "expected_answer": "$3,152 million (approximately $3.2 billion).",
+      "expected_pages": [172, 98, 281],
+      "supporting_evidence": [
+        {"page": 172, "excerpt": "Net income attributable to equity holders of the parent 3,152 1,339 919"},
+        {"page": 98, "excerpt": "ArcelorMittal’s net income attributable to equity holders of the parent was $3.2 billion and $1.3 billion for 2025 and 2024, respectively."}
+      ],
+      "expected_facts": [
+        {"metric": "net_income_attributable_to_parent", "value": 3152, "unit": "USD million", "period": "2025", "pages": [172, 98, 281]}
+      ],
+      "notes": "Net income including non-controlling interests was $3,243 million; that is a different metric."
+    },
+    {
+      "id": "Q014",
+      "category": "financial",
+      "question": "What were ArcelorMittal's capital expenditures in 2025?",
+      "answerable": true,
+      "expected_answer": "$4,337 million (approximately $4.3 billion).",
+      "expected_pages": [67, 176, 203],
+      "supporting_evidence": [
+        {"page": 67, "excerpt": "The Company’s capital expenditures were $4.3 billion, $4.4 billion and $4.6 billion for the years ended December 31, 2025, 2024 and 2023, respectively."},
+        {"page": 176, "excerpt": "Purchase of property, plant and equipment and intangibles (4,337) (4,405) (4,613)"},
+        {"page": 203, "excerpt": "Capital expenditures 688 728 1,416 — 323 926 269 (13) 4,337"}
+      ],
+      "expected_facts": [
+        {"metric": "capital_expenditures", "value": 4337, "unit": "USD million", "period": "2025", "pages": [67, 176, 203]}
+      ],
+      "notes": "Page 67 also gives 2026 guidance of $4.5 to 5.0 billion, which is not the 2025 figure."
+    },
+    {
+      "id": "Q015",
+      "category": "financial",
+      "question": "What was ArcelorMittal's net debt at December 31, 2025?",
+      "answerable": true,
+      "expected_answer": "$7.9 billion (total debt of $13.4 billion less cash and cash equivalents of $5.5 billion).",
+      "expected_pages": [99],
+      "supporting_evidence": [
+        {"page": 99, "excerpt": "Total Debt (A) 13.4 11.6 1.8"},
+        {"page": 99, "excerpt": "Net Debt (A) - (B) = (C) 7.9 5.1 2.8"}
+      ],
+      "expected_facts": [
+        {"metric": "net_debt", "value": 7.9, "unit": "USD billion", "period": "2025-12-31", "pages": [99]}
+      ],
+      "notes": "Net debt is a non-GAAP measure defined in the report. The table is in $ billions."
+    },
+    {
+      "id": "Q016",
+      "category": "comparative",
+      "question": "How did ArcelorMittal's total sales change between 2024 and 2025?",
+      "answerable": true,
+      "expected_answer": "Sales decreased by $1,089 million (1.7%), from $62,441 million in 2024 to $61,352 million in 2025, primarily due to a 2.3% reduction in average steel selling prices.",
+      "expected_pages": [95],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Total 61,352 62,441 (1,089) (1.7) %"},
+        {"page": 95, "excerpt": "ArcelorMittal had sales of $61.4 billion in 2025, representing an 1.7% decrease from sales of $62.4 billion in 2024, primarily due to a 2.3% reduction in average steel selling prices"}
+      ],
+      "expected_facts": [
+        {"metric": "total_sales", "value": 61352, "unit": "USD million", "period": "2025", "pages": [95, 172]},
+        {"metric": "total_sales", "value": 62441, "unit": "USD million", "period": "2024", "pages": [95, 172]}
+      ],
+      "expected_comparison": {"direction": "decrease", "absolute_change": -1089, "unit": "USD million", "percent_change": -1.7}
+    },
+    {
+      "id": "Q017",
+      "category": "comparative",
+      "question": "How did ArcelorMittal's steel shipments change between 2024 and 2025?",
+      "answerable": true,
+      "expected_answer": "Steel shipments decreased slightly by 0.3 million tonnes (0.6%), from 54.3 million tonnes in 2024 to 54.0 million tonnes in 2025.",
+      "expected_pages": [95],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Steel shipments (million tonnes) 54.0 54.3 (0.3) (0.6) %"}
+      ],
+      "alternative_evidence": [
+        {"page": 3, "excerpt": "55.6 48.8 54.0 61.4 57.9 42.4 54.3 62.4 2025 2024", "note": "KPI bar chart values as extracted by pypdf; chart geometry maps 54.0 to the 2025 bar and 54.3 to the 2024 bar of 'Steel shipments (million tonnes)' (scripts/verify_chart_mapping.py)."},
+        {"page": 3, "excerpt": "Steel shipments (million tonnes)", "note": "Category label of the bar pair."}
+      ],
+      "expected_facts": [
+        {"metric": "steel_shipments", "value": 54.0, "unit": "million tonnes", "period": "2025", "pages": [95, 3]},
+        {"metric": "steel_shipments", "value": 54.3, "unit": "million tonnes", "period": "2024", "pages": [95, 3]}
+      ],
+      "expected_comparison": {"direction": "decrease", "absolute_change": -0.3, "unit": "million tonnes", "percent_change": -0.6}
+    },
+    {
+      "id": "Q018",
+      "category": "comparative",
+      "question": "How did ArcelorMittal's iron ore production change between 2024 and 2025?",
+      "answerable": true,
+      "expected_answer": "Iron ore production increased by 6.4 million tonnes (15.1%), from 42.4 million tonnes in 2024 to 48.8 million tonnes in 2025.",
+      "expected_pages": [95],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Iron ore production (million tonnes) 48.8 42.4 6.4 15.1 %"}
+      ],
+      "alternative_evidence": [
+        {"page": 3, "excerpt": "55.6 48.8 54.0 61.4 57.9 42.4 54.3 62.4 2025 2024", "note": "KPI bar chart values as extracted by pypdf; chart geometry maps 48.8 to the 2025 bar and 42.4 to the 2024 bar of 'Iron ore production (million tonnes)*' (scripts/verify_chart_mapping.py)."},
+        {"page": 3, "excerpt": "Iron ore production (million tonnes)*", "note": "Category label of the bar pair (its footnote: includes AMMC, ArcelorMittal Liberia and captive mines). Both values equal the page 95 table."}
+      ],
+      "expected_facts": [
+        {"metric": "iron_ore_production", "value": 48.8, "unit": "million tonnes", "period": "2025", "pages": [95, 3]},
+        {"metric": "iron_ore_production", "value": 42.4, "unit": "million tonnes", "period": "2024", "pages": [95, 3]}
+      ],
+      "expected_comparison": {"direction": "increase", "absolute_change": 6.4, "unit": "million tonnes", "percent_change": 15.1}
+    },
+    {
+      "id": "Q019",
+      "category": "comparative",
+      "question": "How did ArcelorMittal's operating income change between 2024 and 2025, and what was the main reason?",
+      "answerable": true,
+      "expected_answer": "Operating income increased by $318 million (9.6%), from $3,310 million in 2024 to $3,628 million in 2025, mainly due to a $1.9 billion gain on acquiring the remaining 50% stake in AMNS Calvert, partly offset by a $0.4 billion expense for the final settlement of the purchase price of Votorantim's long business in Brazil.",
+      "expected_pages": [95, 172],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Total 3,628 3,310 318 9.6 %"},
+        {"page": 95, "excerpt": "ArcelorMittal’s $3.6 billion operating income in 2025 was higher as compared to $3.3 billion in 2024 mainly due to $1.9 billion gain upon acquisition of the remaining 50% equity stake in AMNS Calvert"}
+      ],
+      "expected_facts": [
+        {"metric": "operating_income", "value": 3628, "unit": "USD million", "period": "2025", "pages": [95, 172]},
+        {"metric": "operating_income", "value": 3310, "unit": "USD million", "period": "2024", "pages": [95, 172]}
+      ],
+      "expected_comparison": {"direction": "increase", "absolute_change": 318, "unit": "USD million", "percent_change": 9.6}
+    },
+    {
+      "id": "Q020",
+      "category": "multi_hop",
+      "question": "Which reportable segment had the largest workforce at the end of 2025, and what were that segment's sales in 2025?",
+      "answerable": true,
+      "expected_answer": "Europe, with 43,878 FTE employees at December 31, 2025, had the largest workforce; Europe's 2025 sales were $28,793 million (before inter-segment eliminations).",
+      "expected_pages": [130, 95],
+      "supporting_evidence": [
+        {"page": 130, "excerpt": "Europe 43,878 48,544 49,959"},
+        {"page": 130, "excerpt": "Total 125,554 125,416 126,756"},
+        {"page": 95, "excerpt": "Europe 28,793 29,952 (1,159) (3.9) %"}
+      ],
+      "expected_facts": [
+        {"metric": "segment_employees_fte", "segment": "Europe", "value": 43878, "unit": "FTE employees", "period": "2025-12-31", "pages": [130]},
+        {"metric": "segment_sales", "segment": "Europe", "value": 28793, "unit": "USD million", "period": "2025", "pages": [95]}
+      ],
+      "reasoning": "Hop 1 (page 130): compare segment FTE counts; Europe 43,878 exceeds Brazil 25,014, Others 21,512, North America 16,083, Sustainable Solutions 13,149 and Mining 5,918. Hop 2 (page 95): look up Europe's 2025 sales."
+    },
+    {
+      "id": "Q021",
+      "category": "multi_hop",
+      "question": "Approximately how much in sales did ArcelorMittal generate per employee in 2025?",
+      "answerable": true,
+      "expected_answer": "About $0.49 million (roughly $488,650) of sales per FTE employee: $61,352 million of sales divided by 125,554 FTE employees.",
+      "expected_pages": [95, 130],
+      "supporting_evidence": [
+        {"page": 95, "excerpt": "Total 61,352 62,441 (1,089) (1.7) %"},
+        {"page": 130, "excerpt": "As of December 31, 2025, ArcelorMittal employed approximately 125,554 full time equivalent (\"FTE\") employees directly"}
+      ],
+      "expected_facts": [
+        {"metric": "total_sales", "value": 61352, "unit": "USD million", "period": "2025", "pages": [95, 172]},
+        {"metric": "employees_fte", "value": 125554, "unit": "FTE employees", "period": "2025-12-31", "pages": [130, 3]}
+      ],
+      "calculation": {"expression": "61352000000 / 125554", "result": 488650, "unit": "USD per FTE employee", "tolerance_percent": 1.0},
+      "notes": "Derived ratio; the report does not state sales per employee directly. Uses year-end headcount rather than average headcount."
+    },
+    {
+      "id": "Q022",
+      "category": "multi_hop",
+      "question": "In 2025, was ArcelorMittal's crude steel production higher or lower than its steel shipments, and by how much?",
+      "answerable": true,
+      "expected_answer": "Higher: crude steel production of 55.6 million tonnes exceeded steel shipments of 54.0 million tonnes by about 1.6 million tonnes.",
+      "expected_pages": [60, 95],
+      "supporting_evidence": [
+        {"page": 60, "excerpt": "Total 41.2 14.4 55.6 74.6"},
+        {"page": 95, "excerpt": "Steel shipments (million tonnes) 54.0 54.3 (0.3) (0.6) %"}
+      ],
+      "expected_facts": [
+        {"metric": "crude_steel_production", "value": 55.6, "unit": "million tonnes", "period": "2025", "pages": [60, 3]},
+        {"metric": "steel_shipments", "value": 54.0, "unit": "million tonnes", "period": "2025", "pages": [95, 3]}
+      ],
+      "calculation": {"expression": "55.6 - 54.0", "result": 1.6, "unit": "million tonnes", "tolerance_percent": 0.0},
+      "notes": "Production and shipments are different measures (crude steel vs. shipped steel products); the question only asks for the arithmetic comparison."
+    },
+    {
+      "id": "Q023",
+      "category": "unanswerable",
+      "question": "What will ArcelorMittal's total sales be in 2030?",
+      "answerable": false,
+      "expected_answer": "ABSTAIN",
+      "expected_behavior": "The system should state that the information is not in the document and must not produce a figure.",
+      "expected_pages": [],
+      "unanswerable_reason": "The report gives actual sales for 2023-2025 only and contains no sales forecast. Its only forward-looking financial guidance is 2026 capital expenditure; mentions of 2030 concern carbon-reduction targets and the window for the share buyback program, not sales.",
+      "distractor_pages": [5, 67, 95],
+      "distractor_evidence": [
+        {"page": 67, "excerpt": "In 2026, capital expenditures are expected to be in the range of $4.5 to 5.0 billion"},
+        {"page": 5, "excerpt": "with share repurchases to be conducted in tranches that may be announced through May 2030"}
+      ]
+    },
+    {
+      "id": "Q024",
+      "category": "unanswerable",
+      "question": "What were ArcelorMittal's total sales on March 15, 2025?",
+      "answerable": false,
+      "expected_answer": "ABSTAIN",
+      "expected_behavior": "The system should state that the information is not in the document and must not divide annual sales to estimate a daily figure.",
+      "expected_pages": [],
+      "unanswerable_reason": "Sales are reported only for full years (consolidated and by segment). The report contains no daily, weekly or quarterly sales breakdown.",
+      "distractor_pages": [95, 172],
+      "distractor_evidence": [
+        {"page": 172, "excerpt": "Sales 4.1 and 12.1 61,352 62,441 68,275"}
+      ]
+    },
+    {
+      "id": "Q025",
+      "category": "unanswerable",
+      "question": "What was the annual base salary of the general manager of ArcelorMittal's Dunkirk plant in 2025?",
+      "answerable": false,
+      "expected_answer": "ABSTAIN",
+      "expected_behavior": "The system should state that the information is not in the document and must not substitute executive or average salaries.",
+      "expected_pages": [],
+      "unanswerable_reason": "Individual remuneration is disclosed only for the Executive Chairman and the CEO, plus aggregates for executive officers and an average base salary for about 11 employees of the holding company. Dunkirk is mentioned only in connection with investments; no site manager's pay is disclosed.",
+      "distractor_pages": [8, 118, 119, 121],
+      "distractor_evidence": [
+        {"page": 119, "excerpt": "Average base salary 604 550 502 446 446"},
+        {"page": 8, "excerpt": "invest €1.2 billion in a first EAF in Dunkirk to decarbonize"}
+      ]
+    }
+  ]
+}

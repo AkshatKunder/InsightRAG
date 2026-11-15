@@ -33,6 +33,7 @@ VALID_CATEGORIES = {"factual", "numerical", "financial", "comparative", "multi_h
 MIN_QUESTIONS, MAX_QUESTIONS = 20, 30
 ID_PATTERN = re.compile(r"^Q\d{3}$")
 ABSTAIN = "ABSTAIN"
+EVIDENCE_KEYS = ("supporting_evidence", "alternative_evidence", "distractor_evidence")
 
 _QUOTES = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
 
@@ -150,13 +151,22 @@ def validate(data: dict, report: Report, page_texts: dict[int, str] | None = Non
                 report.error(f"{qid}: fact '{fact.get('metric')}' has no pages")
             elif not set(fact_pages) & set(pages):
                 report.error(f"{qid}: fact '{fact.get('metric')}' pages {fact_pages} not covered by expected_pages {pages}")
+        # Optional (benchmark v2+): evidence on a page that is an alternative
+        # source for a fact rather than a primary expected page.
+        alternative = q.get("alternative_evidence") or []
+        all_fact_pages = {page for fact in facts for page in fact.get("pages") or []}
+        for item in alternative:
+            if not str(item.get("excerpt") or "").strip():
+                report.error(f"{qid}: empty alternative evidence excerpt")
+            if item.get("page") not in all_fact_pages:
+                report.error(f"{qid}: alternative evidence page {item.get('page')} is not a page of any expected fact")
     report.check("Answerable questions have evidence, facts and covering expected_pages", start)
 
     start = len(report.errors)
     for q in questions:
         qid = q.get("id")
         all_pages = list(q.get("expected_pages") or []) + list(q.get("distractor_pages") or [])
-        all_pages += [item.get("page") for key in ("supporting_evidence", "distractor_evidence") for item in q.get(key) or []]
+        all_pages += [item.get("page") for key in EVIDENCE_KEYS for item in q.get(key) or []]
         all_pages += [page for fact in q.get("expected_facts") or [] for page in fact.get("pages") or []]
         for page in all_pages:
             if not _is_page(page, page_count):
@@ -200,7 +210,7 @@ def validate(data: dict, report: Report, page_texts: dict[int, str] | None = Non
     start = len(report.errors)
     checked = 0
     for q in questions:
-        for key in ("supporting_evidence", "distractor_evidence"):
+        for key in EVIDENCE_KEYS:
             for item in q.get(key) or []:
                 page, excerpt = item.get("page"), str(item.get("excerpt") or "")
                 checked += 1

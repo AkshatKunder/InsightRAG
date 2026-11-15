@@ -130,6 +130,18 @@ exists, the excerpt check. Use `--no-pdf` to skip the PDF, or pass another file:
 The validator does not judge whether an answer is semantically correct; that
 was done by hand as described above.
 
+## Benchmark versions
+
+| File | Status |
+|---|---|
+| `benchmark_v1.json` | Original verified benchmark. Immutable; kept for comparability. |
+| `benchmark_v2.json` | v1 plus page 3 as alternative evidence for Q017/Q018 (see [benchmark_v2_changes.md](benchmark_v2_changes.md)). Primary benchmark for Phase 2 comparisons. |
+
+v2 adds an optional `alternative_evidence` field (`[{page, excerpt, note}]`):
+verbatim excerpts on a page listed in a fact's `pages` but not in
+`expected_pages`. The validator checks these like `supporting_evidence`.
+Validate either file with `python scripts/validate_benchmark.py data/evaluation/benchmark_v2.json`.
+
 ## Retrieval evaluation
 
 `python scripts/evaluate_retrieval.py` scores the retrieval stage against this
