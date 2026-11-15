@@ -1,6 +1,7 @@
 import pytest
 
 from app.evaluation.retrieval_metrics import (
+    deduplicate_ranking,
     first_relevant_rank,
     group_recall_at_k,
     mean_reciprocal_rank,
@@ -42,6 +43,26 @@ def test_recall_depends_on_k():
     assert recall_at_k(retrieved, {1, 2}, 2) == 0.5
     assert recall_at_k(retrieved, {1, 2}, 4) == 1.0
     assert recall_at_k(retrieved, {1, 2}, 10) == 1.0
+
+
+def test_recall_k_counts_distinct_pages_not_chunks():
+    # Raw chunks [9, 9, 9, 1]: the relevant page is 2nd distinct unit, so it is in the top 2.
+    assert recall_at_k([9, 9, 9, 1], {1}, 2) == 1.0
+    assert recall_at_k([9, 9, 9, 1], {1}, 1) == 0.0
+
+
+def test_recall_fewer_than_k_distinct_units():
+    assert recall_at_k([1, 1, 1], {1, 2}, 10) == 0.5
+
+
+def test_recall_and_precision_share_the_same_units():
+    retrieved = [1, 1, 9, 2, 2, 8, 3]  # distinct: [1, 9, 2, 8, 3]
+    relevant = {1, 2, 3}
+    for k in range(1, 7):
+        top = deduplicate_ranking(retrieved)[:k]
+        hits = len(set(top) & relevant)
+        assert recall_at_k(retrieved, relevant, k) == pytest.approx(hits / len(relevant))
+        assert precision_at_k(retrieved, relevant, k) == pytest.approx(hits / len(top))
 
 
 def test_recall_without_ground_truth_is_zero():
@@ -89,9 +110,30 @@ def test_precision_empty_results_is_zero():
     assert precision_at_k([], {1}, 5) == 0.0
 
 
-def test_precision_duplicate_chunks_do_not_inflate():
-    # Three chunks, one distinct relevant page: 1/3, not 3/3.
-    assert precision_at_k([1, 1, 1], {1}, 3) == pytest.approx(1 / 3)
+def test_precision_duplicate_chunks_count_as_one_unit():
+    # Three chunks of one relevant page = one distinct unit, and it is relevant.
+    assert precision_at_k([1, 1, 1], {1}, 3) == 1.0
+    # Duplicates of a relevant page cannot raise the count above the distinct pages.
+    assert precision_at_k([1, 1, 9], {1}, 3) == 0.5
+
+
+def test_precision_duplicate_irrelevant_chunks_do_not_dilute():
+    # Distinct ranking is [9, 1]; one of two units relevant.
+    assert precision_at_k([9, 9, 9, 1], {1}, 3) == 0.5
+
+
+def test_precision_fewer_than_k_distinct_units():
+    # Five chunks but only two distinct pages: denominator is 2, not 5 or K.
+    assert precision_at_k([1, 1, 2, 2, 1], {1, 2}, 10) == 1.0
+    assert precision_at_k([1, 9, 1, 9], {1}, 5) == 0.5
+
+
+def test_precision_multiple_pages_with_interleaved_duplicates():
+    # Distinct ranking is [1, 9, 2, 8]; @2 -> 1/2, @3 -> 2/3, @4 -> 2/4.
+    retrieved = [1, 1, 9, 1, 2, 9, 8]
+    assert precision_at_k(retrieved, {1, 2}, 2) == 0.5
+    assert precision_at_k(retrieved, {1, 2}, 3) == pytest.approx(2 / 3)
+    assert precision_at_k(retrieved, {1, 2}, 4) == 0.5
 
 
 def test_precision_counts_unusable_results_in_denominator():
@@ -125,6 +167,29 @@ def test_reciprocal_rank_uses_first_of_multiple_relevant():
 
 def test_reciprocal_rank_skips_unusable_results():
     assert reciprocal_rank([None, 1], {1}) == 0.5
+    # Each unusable result is its own unit (they cannot be recognised as duplicates).
+    assert reciprocal_rank([None, None, 1], {1}) == pytest.approx(1 / 3)
+
+
+def test_reciprocal_rank_uses_distinct_unit_position():
+    # Chunk rank 4, but the 2nd distinct page.
+    assert reciprocal_rank([9, 9, 9, 1], {1}) == 0.5
+    assert first_relevant_rank([9, 9, 9, 1], {1}) == 2
+
+
+# ---------------------------------------------------------------- deduplication
+
+
+def test_deduplicate_ranking_keeps_first_occurrence_order():
+    assert deduplicate_ranking([3, 1, 3, 2, 1]) == [3, 1, 2]
+
+
+def test_deduplicate_ranking_keeps_each_unusable_result():
+    assert deduplicate_ranking([None, 1, None, 1]) == [None, 1, None]
+
+
+def test_deduplicate_ranking_empty():
+    assert deduplicate_ranking([]) == []
 
 
 def test_mean_reciprocal_rank():

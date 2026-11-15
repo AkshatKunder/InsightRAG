@@ -3,7 +3,7 @@
     "benchmark_name": "InsightRAG Annual Report Benchmark v1",
     "benchmark_version": "1.0",
     "source_document": "annual_report.pdf",
-    "timestamp": "2026-11-15T09:29:29+00:00",
+    "timestamp": "2026-11-15T09:51:14+00:00",
     "config": {
       "strategy": "hybrid_rrf+rerank",
       "description": "Assistant retrieval stage (app/main.py): hybrid BM25+vector RRF with page diversity, then cross-encoder rerank",
@@ -168,9 +168,10 @@
       }
     },
     "questions_with_no_relevant_result": [],
-    "questions_with_fewer_than_max_k_results": [],
+    "questions_with_fewer_than_max_k_units": [],
+    "num_duplicate_chunks": 0,
     "num_results_with_invalid_metadata": 0,
-    "notes": "Metrics cover answerable questions only; unanswerable questions are excluded and these numbers say nothing about abstention. recall = fact-level recall; page_recall = share of expected_pages retrieved; precision = distinct relevant pages / min(K, results returned); relevance is page-level."
+    "notes": "Metrics cover answerable questions only; unanswerable questions are excluded and these numbers say nothing about abstention. recall = fact-level recall; page_recall = share of expected_pages retrieved; precision = relevant pages in top K / min(K, distinct pages returned). K counts distinct (source, page) units in first-occurrence order, not raw chunks; relevance is page-level."
   },
   "questions": [
     {
@@ -193,8 +194,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        25,
+        3,
+        26,
+        4,
+        59,
+        199,
+        70,
+        58,
+        29,
+        31
+      ],
+      "ranked_pages": [
         25,
         3,
         26,
@@ -233,11 +248,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 25,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014857142857142857,
           "rrf_score": 0.014857142857142857,
@@ -250,11 +266,12 @@
           "text_preview": "to ArcelorMittal's core activities in steel. The Company sees the value of being present in both developed markets, with higher per capita steel demand and sophisticated, high-value product offerings,"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01461569095977698,
           "rrf_score": 0.01461569095977698,
@@ -267,11 +284,12 @@
           "text_preview": "2007 of its predecessor companies Mittal Steel Company N.V. and Arcelor, each of which had grown through acquisitions over many years. Since its creation ArcelorMittal has experienced periods of exter"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014379084967320262,
           "rrf_score": 0.014379084967320262,
@@ -284,11 +302,12 @@
           "text_preview": "towards all stakeholders. ArcelorMittal's commitment to sustainability and safety is outlined below. See \"Business overview—Sustainable development\". Sustainability and safety are core values that und"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 4,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014920634920634921,
           "rrf_score": 0.014920634920634921,
@@ -301,11 +320,12 @@
           "text_preview": "ArcelorMittal Sales & Administration LLC 833 W. Lincoln Highway, Suite 200E, Schererville, IN 46375 Telephone: +219 256 7303 Internet site ArcelorMittal maintains an Internet site at www.arcelormittal"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011270890011659542,
           "rrf_score": 0.011270890011659542,
@@ -318,11 +338,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 199,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011854792966534317,
           "rrf_score": 0.011854792966534317,
@@ -335,11 +356,12 @@
           "text_preview": "capacity is focused around low-carbon, integrated production hubs in the U.S. and Brazil, both of which are important strategic markets for ArcelorMittal. The fair value of ArcelorMittal's investment "
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 70,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010627062706270627,
           "rrf_score": 0.010627062706270627,
@@ -352,11 +374,12 @@
           "text_preview": "The following tables provide an overview of ArcelorMittal’s principal mining operations. The production of Run of Mine (\"ROM\") iron ore and coal is that which is attributable to ArcelorMittal based on"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 58,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009375,
           "rrf_score": 0.009375,
@@ -367,11 +390,12 @@
           "text_preview": "Organizational structure ArcelorMittal is a holding company with no business operations of its own. All of ArcelorMittal’s significant operating subsidiaries are indirectly owned by ArcelorMittal thro"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 29,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00909090909090909,
           "rrf_score": 0.00909090909090909,
@@ -382,11 +406,12 @@
           "text_preview": "with unmatched range; iCARe® steels also help to light-weight the motors and electrical systems in conventional internal combustion engine (ICE) vehicles. ArcelorMittal's mobility market also includes"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 31,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008695652173913044,
           "rrf_score": 0.008695652173913044,
@@ -432,8 +457,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        94,
+        201,
+        59,
+        203,
+        208,
+        4,
+        25,
+        3,
+        29,
+        179
+      ],
+      "ranked_pages": [
         94,
         201,
         59,
@@ -474,11 +513,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 94,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015625,
           "rrf_score": 0.015625,
@@ -491,11 +531,12 @@
           "text_preview": "Financial Review— Operating Results\" in the Annual Report for the year ended December 31, 2024. ArcelorMittal reports its operations in six reportable segments: North America, Brazil, Europe, India an"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 201,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016129032258064516,
           "rrf_score": 0.016129032258064516,
@@ -508,11 +549,12 @@
           "text_preview": "of Acciaierie d'Italia effective February 20, 2024 (see note 2.4.1), and performed accordingly a value in use calculation resulting in a 1,405 impairment loss. The Company is not aware of any material"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014890710382513661,
           "rrf_score": 0.014890710382513661,
@@ -525,11 +567,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013919413919413919,
           "rrf_score": 0.013919413919413919,
@@ -542,11 +585,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 208,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011923076923076922,
           "rrf_score": 0.011923076923076922,
@@ -559,11 +603,12 @@
           "text_preview": "are recognized as gains in selling, general and administrative expenses. ArcelorMittal’s policy is to record an allowance for expected lifetime credit losses and a charge in selling, general and admin"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 4,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012934472934472934,
           "rrf_score": 0.012934472934472934,
@@ -576,11 +621,12 @@
           "text_preview": "ArcelorMittal Sales & Administration LLC 833 W. Lincoln Highway, Suite 200E, Schererville, IN 46375 Telephone: +219 256 7303 Internet site ArcelorMittal maintains an Internet site at www.arcelormittal"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 25,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011914774320156994,
           "rrf_score": 0.011914774320156994,
@@ -593,11 +639,12 @@
           "text_preview": "to ArcelorMittal's core activities in steel. The Company sees the value of being present in both developed markets, with higher per capita steel demand and sophisticated, high-value product offerings,"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012261904761904762,
           "rrf_score": 0.012261904761904762,
@@ -610,11 +657,12 @@
           "text_preview": "2007 of its predecessor companies Mittal Steel Company N.V. and Arcelor, each of which had grown through acquisitions over many years. Since its creation ArcelorMittal has experienced periods of exter"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 29,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012241153342070774,
           "rrf_score": 0.012241153342070774,
@@ -627,11 +675,12 @@
           "text_preview": "with unmatched range; iCARe® steels also help to light-weight the motors and electrical systems in conventional internal combustion engine (ICE) vehicles. ArcelorMittal's mobility market also includes"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 179,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011713776419658772,
           "rrf_score": 0.011713776419658772,
@@ -668,8 +717,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        107,
+        111,
+        112,
+        113,
+        170,
+        114,
+        109,
+        108,
+        132,
+        141
+      ],
+      "ranked_pages": [
         107,
         111,
         112,
@@ -708,11 +771,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 107,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016234796404019036,
           "rrf_score": 0.016234796404019036,
@@ -725,11 +789,12 @@
           "text_preview": "Lakshmi N. Mittal Executive Chairman 75 years old Nationality: Indian Date of first election: May 1997 Term start date: May 2023 Term end date: May 2026 Expertise and experience Lakshmi N. Mittal is t"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 111,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015169398907103825,
           "rrf_score": 0.015169398907103825,
@@ -742,11 +807,12 @@
           "text_preview": "Executive Chairman of ArcelorMittal Aditya Mittal1 49 Chief Executive Officer of ArcelorMittal Genuino Christino1 54 Chief Financial Officer of ArcelorMittal Kleber Silva1 62 Executive Vice President,"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 112,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015584415584415583,
           "rrf_score": 0.015584415584415583,
@@ -759,11 +825,12 @@
           "text_preview": "Genuino M. Christino Member of the Group management committee, Chief Financial Officer. 54 years old Nationality: Brazilian Expertise and experience Genuino M. Christino is the Group Chief Financial O"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 113,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014837576821773486,
           "rrf_score": 0.014837576821773486,
@@ -776,11 +843,12 @@
           "text_preview": "Jorge Luiz Ribeiro De Oliveira Member of the Group management committee, President of ArcelorMittal Brasil and CEO of ArcelorMittal Flat South America. 60 years old Nationality: Brazilian Expertise an"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 170,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014374999999999999,
           "rrf_score": 0.014374999999999999,
@@ -793,11 +861,12 @@
           "text_preview": "Chief Executive Officer and Chief Financial Officer’s responsibility statement We confirm, to the best of our knowledge, that: 1. the consolidated financial statements of ArcelorMittal presented in th"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 114,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013653846153846154,
           "rrf_score": 0.013653846153846154,
@@ -810,11 +879,12 @@
           "text_preview": "experience Vijay Goyal is a member of the Group management committee, Executive Vice President and is regional Chief Executive Officer of Ukraine, Development Initiatives and Europe and Middle East jo"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 109,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013406593406593406,
           "rrf_score": 0.013406593406593406,
@@ -827,11 +897,12 @@
           "text_preview": "Karyn Ovelmen Non-executive and independent Director 62 years old Nationality: USA Date of first election: May 2015 Term start date: June 2021 Term end date: May 2027 Expertise and experience Karyn Ov"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 108,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01316912972085386,
           "rrf_score": 0.01316912972085386,
@@ -844,11 +915,12 @@
           "text_preview": "Vanisha Mittal Bhatia Non-independent Director 45 years old Nationality: Indian Date of first election: December 2004 Term start date: May 2022 Term end date: May 2028 Expertise and experience Vanisha"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 132,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01332595053525286,
           "rrf_score": 0.01332595053525286,
@@ -861,11 +933,12 @@
           "text_preview": "and conditions of employment will take place from February 1, 2026 to March 31, 2026.The Longs business wind-down at the Newcastle facility commenced at the end of the third quarter of 2025 with all p"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 141,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012140391254315305,
           "rrf_score": 0.012140391254315305,
@@ -906,8 +979,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        3,
+        7,
+        69,
+        26,
+        44,
+        65,
+        62,
+        61,
+        220,
+        183
+      ],
+      "ranked_pages": [
         3,
         7,
         69,
@@ -946,11 +1033,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015512600929777343,
           "rrf_score": 0.015512600929777343,
@@ -963,11 +1051,12 @@
           "text_preview": "2007 of its predecessor companies Mittal Steel Company N.V. and Arcelor, each of which had grown through acquisitions over many years. Since its creation ArcelorMittal has experienced periods of exter"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01415686274509804,
           "rrf_score": 0.01415686274509804,
@@ -980,11 +1069,12 @@
           "text_preview": "accordance with the terms of the EPA, ArcelorMittal paid $1 consideration for the shares of NS Kote Inc., which holds 50% of the equity interest of AMNS Calvert, in addition to cash and loans receivab"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013722826086956522,
           "rrf_score": 0.013722826086956522,
@@ -997,11 +1087,12 @@
           "text_preview": "reserves and resources ArcelorMittal has iron ore production facilities in North America (Canada and Mexico), South America (Brazil), Europe (Ukraine), Africa (Liberia), and in India through its joint"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013725151253241141,
           "rrf_score": 0.013725151253241141,
@@ -1014,11 +1105,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 44,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01340153452685422,
           "rrf_score": 0.01340153452685422,
@@ -1031,11 +1123,12 @@
           "text_preview": "128 inventions newly-protected in 2025. Because of this constant innovation, the Company does not expect the lapse of patents that protect older technology to materially affect medium term revenue. In"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 65,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013624583487597186,
           "rrf_score": 0.013624583487597186,
@@ -1048,11 +1141,12 @@
           "text_preview": "Renewables AM Green Energy's renewable energy project was commissioned in the second quarter of 2025. See “Business overview—Sustainable development— Climate change\" and \"—Capital expenditures\". Recyc"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 62,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01339662447257384,
           "rrf_score": 0.01339662447257384,
@@ -1065,11 +1159,12 @@
           "text_preview": "BRAZIL Crude Steel Unit Country Locations Production in 2025 (in million tonnes per year) 1 Type of plant Products Sol Brazil Vitoria n/a Coke-Making Coke ArcelorMittal Tubarão Brazil Vitoria 6.8 Inte"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 61,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01261528326745718,
           "rrf_score": 0.01261528326745718,
@@ -1082,11 +1177,12 @@
           "text_preview": "North America Crude Steel Unit Country Locations Production in 2025 (in million tonnes per year)1 Type of plant Products ArcelorMittal Dofasco Canada Hamilton 3.0 Integrated, Mini-mill Flat ArcelorMit"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 220,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011357477211135747,
           "rrf_score": 0.011357477211135747,
@@ -1099,11 +1195,12 @@
           "text_preview": "Impairment charges and reversals relating to property, plant and equipment and intangibles (excluding goodwill) were as follows for the years ended December 31, 2025, 2024 and 2023: 2025 In 2025, the "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 183,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01101010101010101,
           "rrf_score": 0.01101010101010101,
@@ -1144,8 +1241,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        3,
+        268,
+        69,
+        7,
+        144,
+        196,
+        108,
+        189,
+        4,
+        273
+      ],
+      "ranked_pages": [
         3,
         268,
         69,
@@ -1184,11 +1295,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016129032258064516,
           "rrf_score": 0.016129032258064516,
@@ -1201,11 +1313,12 @@
           "text_preview": "2007 of its predecessor companies Mittal Steel Company N.V. and Arcelor, each of which had grown through acquisitions over many years. Since its creation ArcelorMittal has experienced periods of exter"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 268,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012611484900641528,
           "rrf_score": 0.012611484900641528,
@@ -1218,11 +1331,12 @@
           "text_preview": "ICMS credits. In the Administrative instance, all cases were unfavorably closed in November 2020, and ArcelorMittal Brasil, in 2021, filed a lawsuit to challenge the assessments. The case is currently"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012538275584206286,
           "rrf_score": 0.012538275584206286,
@@ -1235,11 +1349,12 @@
           "text_preview": "reserves and resources ArcelorMittal has iron ore production facilities in North America (Canada and Mexico), South America (Brazil), Europe (Ukraine), Africa (Liberia), and in India through its joint"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008955223880597015,
           "rrf_score": 0.008955223880597015,
@@ -1250,11 +1365,12 @@
           "text_preview": "accordance with the terms of the EPA, ArcelorMittal paid $1 consideration for the shares of NS Kote Inc., which holds 50% of the equity interest of AMNS Calvert, in addition to cash and loans receivab"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 144,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009784088698696751,
           "rrf_score": 0.009784088698696751,
@@ -1267,11 +1383,12 @@
           "text_preview": "Company's performance criteria not fully within the control of the PSU holder, Aditya Mittal does not beneficially own ArcelorMittal ordinary shares by virtue of his ownership of the PSUs. Aditya Mitt"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 196,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008571428571428572,
           "rrf_score": 0.008571428571428572,
@@ -1282,11 +1399,12 @@
           "text_preview": "2, 2024. Tauron challenged this assertion and in October 2024, ArcelorMittal was served with a request for arbitration filed by Tauron (see note 9.3). In 2025 the Company recognized a 81 impairment lo"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 108,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00923076923076923,
           "rrf_score": 0.00923076923076923,
@@ -1297,11 +1415,12 @@
           "text_preview": "Vanisha Mittal Bhatia Non-independent Director 45 years old Nationality: Indian Date of first election: December 2004 Term start date: May 2022 Term end date: May 2028 Expertise and experience Vanisha"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 189,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008,
           "rrf_score": 0.008,
@@ -1312,11 +1431,12 @@
           "text_preview": "acquired. The Company concluded that the acquisition of Euler Hermes RE was not a business combination as the transaction did not include the acquisition of any strategic, operational and resource man"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 4,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008695652173913044,
           "rrf_score": 0.008695652173913044,
@@ -1327,11 +1447,12 @@
           "text_preview": "ArcelorMittal Sales & Administration LLC 833 W. Lincoln Highway, Suite 200E, Schererville, IN 46375 Telephone: +219 256 7303 Internet site ArcelorMittal maintains an Internet site at www.arcelormittal"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 273,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008108108108108109,
           "rrf_score": 0.008108108108108109,
@@ -1366,8 +1487,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        204,
+        95,
+        191,
+        203,
+        101,
+        100,
+        97,
+        246,
+        207,
+        172
+      ],
+      "ranked_pages": [
         204,
         95,
         191,
@@ -1407,11 +1542,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015806214827501833,
           "rrf_score": 0.015806214827501833,
@@ -1424,11 +1560,12 @@
           "text_preview": "of Africa 370 572 524 China 1,167 762 764 Kazakhstan2 — — 503 South Korea 261 337 410 India 435 128 102 Rest of Asia 745 1,005 1,340 Total Asia & Africa 5,500 5,363 6,250 Total 61,352 62,441 68,275 1."
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016234796404019036,
           "rrf_score": 0.016234796404019036,
@@ -1441,11 +1578,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 191,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014569805194805194,
           "rrf_score": 0.014569805194805194,
@@ -1458,11 +1596,12 @@
           "text_preview": "In addition, during 2025, the Company also initiated and partially completed the sale of two tubular products facilities ArcelorMittal Tubular Products Iasi (\"AMTPI\") and ArcelorMittal Tubular Product"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014251207729468598,
           "rrf_score": 0.014251207729468598,
@@ -1475,11 +1614,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012829226847918436,
           "rrf_score": 0.012829226847918436,
@@ -1492,11 +1632,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 100,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012231819448314293,
           "rrf_score": 0.012231819448314293,
@@ -1509,11 +1650,12 @@
           "text_preview": "bonds mandatorily convertible into preferred shares of such subsidiary for a total cash consideration of $340 million. See notes 11.2 to the consolidated financial statements. On December 19, 2025, th"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012512218963831867,
           "rrf_score": 0.012512218963831867,
@@ -1526,11 +1668,12 @@
           "text_preview": "lower steel shipments, $0.2 billion impairment charge related to the divestment of the Company's steel and mining operations in Bosnia and $0.1 billion restructuring costs. Operating income in 2024 wa"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011811455193203618,
           "rrf_score": 0.011811455193203618,
@@ -1543,11 +1686,12 @@
           "text_preview": "Undiscounted amounts related to lease contracts not yet commenced and therefore not included in the recognized lease liabilities as of December 31, 2025 and December 31, 2024, to which the Company is "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 207,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012833008447043534,
           "rrf_score": 0.012833008447043534,
@@ -1560,11 +1704,12 @@
           "text_preview": "customers which are classified as unsatisfied performance obligations and recognized as liabilities in line with IFRS 15. The Company expects 100% of these unsatisfied performance obligations as of De"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 172,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013025641025641025,
           "rrf_score": 0.013025641025641025,
@@ -1601,8 +1746,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        130,
+        132,
+        119,
+        246,
+        131,
+        26,
+        259,
+        141,
+        128,
+        37
+      ],
+      "ranked_pages": [
         130,
         132,
         119,
@@ -1641,11 +1800,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 130,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016393442622950817,
           "rrf_score": 0.016393442622950817,
@@ -1658,11 +1818,12 @@
           "text_preview": "Employees As of December 31, 2025, ArcelorMittal employed approximately 125,554 full time equivalent (\"FTE\") employees directly, as well as a large number of contractors. The Company recruits, hires, "
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 132,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015831265508684862,
           "rrf_score": 0.015831265508684862,
@@ -1675,11 +1836,12 @@
           "text_preview": "and conditions of employment will take place from February 1, 2026 to March 31, 2026.The Longs business wind-down at the Newcastle facility commenced at the end of the third quarter of 2025 with all p"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 119,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01534090909090909,
           "rrf_score": 0.01534090909090909,
@@ -1692,11 +1854,12 @@
           "text_preview": "Except for the Executive Chairman and the CEO, members of the Board of Directors have not received any remuneration from any subsidiary of the Group in 2025. The annual base salary for the last five f"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.0140183346065699,
           "rrf_score": 0.0140183346065699,
@@ -1709,11 +1872,12 @@
           "text_preview": "Undiscounted amounts related to lease contracts not yet commenced and therefore not included in the recognized lease liabilities as of December 31, 2025 and December 31, 2024, to which the Company is "
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 131,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014069264069264068,
           "rrf_score": 0.014069264069264068,
@@ -1726,11 +1890,12 @@
           "text_preview": "all the stakeholders, including employees. During the year, the Company reviewed its Diversity & Inclusion Policy, placing greater emphasis on non- discrimination, and merit-based opportunity across t"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012591587516960653,
           "rrf_score": 0.012591587516960653,
@@ -1743,11 +1908,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 259,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012024756852343058,
           "rrf_score": 0.012024756852343058,
@@ -1760,11 +1926,12 @@
           "text_preview": "PSUs are subject to the fulfillment of cumulative performance criteria over a three-year period from the date of the PSU grant such as return on capital employed (\"ROCE\"), TSR and gap to competition ("
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 141,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011764705882352941,
           "rrf_score": 0.011764705882352941,
@@ -1777,11 +1944,12 @@
           "text_preview": "2025 self-evaluation on January 27, 2026. The charter of the ARCG Committee is available from ArcelorMittal upon request. Succession management Succession management at ArcelorMittal is a systematic, "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 128,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011063615790797083,
           "rrf_score": 0.011063615790797083,
@@ -1794,11 +1962,12 @@
           "text_preview": "annual performance bonus being the absolute maximum for the Executive Chairman and the CEO. Similarly, a reduction factor will be applied for those at the lower end. In exceptional circumstances, the "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 37,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01033172435041594,
           "rrf_score": 0.01033172435041594,
@@ -1835,8 +2004,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        26,
+        3,
+        65,
+        63,
+        62,
+        91,
+        69,
+        61,
+        59,
+        64
+      ],
+      "ranked_pages": [
         26,
         3,
         65,
@@ -1875,11 +2058,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015550351288056204,
           "rrf_score": 0.015550351288056204,
@@ -1892,11 +2076,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016129032258064516,
           "rrf_score": 0.016129032258064516,
@@ -1909,11 +2094,12 @@
           "text_preview": "INTRODUCTION Company overview ArcelorMittal is one of the world’s leading integrated steel and mining companies. ArcelorMittal is the largest steel producer in Europe and among the largest in the Amer"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 65,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014303482587064677,
           "rrf_score": 0.014303482587064677,
@@ -1926,11 +2112,12 @@
           "text_preview": "Renewables AM Green Energy's renewable energy project was commissioned in the second quarter of 2025. See “Business overview—Sustainable development— Climate change\" and \"—Capital expenditures\". Recyc"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 63,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014228934817170111,
           "rrf_score": 0.014228934817170111,
@@ -1943,11 +2130,12 @@
           "text_preview": "EUROPE Crude Steel Unit Country Locations Production in 2025 (in million tonnes per year) 1 Type of plant Products ArcelorMittal Bremen Germany Bremen, Bottrop 2.9 Integrated Flat, Coke ArcelorMittal "
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 62,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013890457368718238,
           "rrf_score": 0.013890457368718238,
@@ -1960,11 +2148,12 @@
           "text_preview": "BRAZIL Crude Steel Unit Country Locations Production in 2025 (in million tonnes per year) 1 Type of plant Products Sol Brazil Vitoria n/a Coke-Making Coke ArcelorMittal Tubarão Brazil Vitoria 6.8 Inte"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 91,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014786324786324787,
           "rrf_score": 0.014786324786324787,
@@ -1977,11 +2166,12 @@
           "text_preview": "in 2024 to $1,266/t in 2025 ($1,266/t in 2023) and medium carbon ferro manganese prices decreased only slightly from $1,790/t in 2024 to $1,785/t in 2025 ($1,832/t in 2023). Demand for manganese alloy"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012794612794612794,
           "rrf_score": 0.012794612794612794,
@@ -1994,11 +2184,12 @@
           "text_preview": "reserves and resources ArcelorMittal has iron ore production facilities in North America (Canada and Mexico), South America (Brazil), Europe (Ukraine), Africa (Liberia), and in India through its joint"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 61,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012319277108433734,
           "rrf_score": 0.012319277108433734,
@@ -2011,11 +2202,12 @@
           "text_preview": "North America Crude Steel Unit Country Locations Production in 2025 (in million tonnes per year)1 Type of plant Products ArcelorMittal Dofasco Canada Hamilton 3.0 Integrated, Mini-mill Flat ArcelorMit"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012292206801891109,
           "rrf_score": 0.012292206801891109,
@@ -2028,11 +2220,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 64,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011,
           "rrf_score": 0.011,
@@ -2069,8 +2262,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        69,
+        26,
+        3,
+        59,
+        70,
+        72,
+        65,
+        76,
+        42,
+        105
+      ],
+      "ranked_pages": [
         69,
         26,
         3,
@@ -2109,11 +2316,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015806214827501833,
           "rrf_score": 0.015806214827501833,
@@ -2126,11 +2334,12 @@
           "text_preview": "reserves and resources ArcelorMittal has iron ore production facilities in North America (Canada and Mexico), South America (Brazil), Europe (Ukraine), Africa (Liberia), and in India through its joint"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015406162464985993,
           "rrf_score": 0.015406162464985993,
@@ -2143,11 +2352,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015311222171740118,
           "rrf_score": 0.015311222171740118,
@@ -2160,11 +2370,12 @@
           "text_preview": "INTRODUCTION Company overview ArcelorMittal is one of the world’s leading integrated steel and mining companies. ArcelorMittal is the largest steel producer in Europe and among the largest in the Amer"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01502304147465438,
           "rrf_score": 0.01502304147465438,
@@ -2177,11 +2388,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 70,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014799910574558461,
           "rrf_score": 0.014799910574558461,
@@ -2194,11 +2406,12 @@
           "text_preview": "The following tables provide an overview of ArcelorMittal’s principal mining operations. The production of Run of Mine (\"ROM\") iron ore and coal is that which is attributable to ArcelorMittal based on"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 72,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013964784456587734,
           "rrf_score": 0.013964784456587734,
@@ -2211,11 +2424,12 @@
           "text_preview": "Summary of ArcelorMittal’s Mining Operations ArcelorMittal's production stage iron ore mining operations include AMMC and AML in the Mining segment. They also include the production stage captive mine"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 65,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012552552552552554,
           "rrf_score": 0.012552552552552554,
@@ -2228,11 +2442,12 @@
           "text_preview": "Renewables AM Green Energy's renewable energy project was commissioned in the second quarter of 2025. See “Business overview—Sustainable development— Climate change\" and \"—Capital expenditures\". Recyc"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 76,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012058823529411764,
           "rrf_score": 0.012058823529411764,
@@ -2245,11 +2460,12 @@
           "text_preview": "73% of its maximum capacity. Mining at open pit continued without stoppages in 2025. The underground mine was mostly idle in 2025 due to lower demand for sintered ore. Iron ore production at the under"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 42,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013942307692307691,
           "rrf_score": 0.013942307692307691,
@@ -2262,11 +2478,12 @@
           "text_preview": "fairly, respectfully, and in a manner that improves livelihoods, prioritizing the rights and well-being of those affected. The Company is also a member of AMIRA, a global research group, and has been "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 105,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012591587516960653,
           "rrf_score": 0.012591587516960653,
@@ -2303,8 +2520,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        30,
+        26,
+        29,
+        69,
+        7,
+        228,
+        28,
+        220,
+        31,
+        102
+      ],
+      "ranked_pages": [
         30,
         26,
         29,
@@ -2343,11 +2574,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 30,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015238095238095238,
           "rrf_score": 0.015238095238095238,
@@ -2360,11 +2592,12 @@
           "text_preview": "2023, respectively). In addition, the Company capitalized $41 million of research and development expenses in 2025 (compared to $29 million in 2024 and $26 million in 2023). In 2025, R&D launched 19 n"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01525735294117647,
           "rrf_score": 0.01525735294117647,
@@ -2377,11 +2610,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 29,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01478494623655914,
           "rrf_score": 0.01478494623655914,
@@ -2394,11 +2628,12 @@
           "text_preview": "with unmatched range; iCARe® steels also help to light-weight the motors and electrical systems in conventional internal combustion engine (ICE) vehicles. ArcelorMittal's mobility market also includes"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012190594059405941,
           "rrf_score": 0.012190594059405941,
@@ -2411,11 +2646,12 @@
           "text_preview": "and grow initially to approximately 15 million tonnes of rolled products by the second half of 2026 in Hazira (phase 1) including automotive downstream and enhancements to iron ore operations, with es"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012937062937062937,
           "rrf_score": 0.012937062937062937,
@@ -2428,11 +2664,12 @@
           "text_preview": "Key transactions and events in 2025 During 2025, ArcelorMittal completed several acquisitions, capital market, share buyback transactions and divestment processes. Please refer to notes 2.2.4, 2.3, 6."
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 228,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011188271604938271,
           "rrf_score": 0.011188271604938271,
@@ -2445,11 +2682,12 @@
           "text_preview": "European Investment Bank (“EIB”) Loan On December 19, 2025, ArcelorMittal signed a €400 million loan agreement with the European Investment Bank (\"EIB\") for funding of research, development and innova"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 28,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013050397877984085,
           "rrf_score": 0.013050397877984085,
@@ -2462,11 +2700,12 @@
           "text_preview": "disciplined approach to investing and uses teams with diverse areas of expertise from different business units across the Company to evaluate opportunities, conduct due diligence and monitor integrati"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 220,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012905405405405405,
           "rrf_score": 0.012905405405405405,
@@ -2479,11 +2718,12 @@
           "text_preview": "Impairment charges and reversals relating to property, plant and equipment and intangibles (excluding goodwill) were as follows for the years ended December 31, 2025, 2024 and 2023: 2025 In 2025, the "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 31,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011720983419096626,
           "rrf_score": 0.011720983419096626,
@@ -2496,11 +2736,12 @@
           "text_preview": "engineering design for a full-scale industrial plant, thereby demonstrating the technology’s techno-economic feasibility. Regarding the EAF route, the Company's new EAF and scrap expert control system"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 102,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009836065573770491,
           "rrf_score": 0.009836065573770491,
@@ -2535,8 +2776,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        26,
+        98,
+        204,
+        94,
+        199,
+        203,
+        116,
+        101,
+        7
+      ],
+      "ranked_pages": [
         95,
         26,
         98,
@@ -2575,11 +2830,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015073529411764706,
           "rrf_score": 0.015073529411764706,
@@ -2592,11 +2848,12 @@
           "text_preview": "and Serra Azul expansion). Selling, general and administrative expenses Selling, general and administrative expenses (\"SG&A\") were $2.6 billion in 2025 as compared to $2.5 billion in 2024. SG&A as a p"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015345149253731344,
           "rrf_score": 0.015345149253731344,
@@ -2609,11 +2866,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 98,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015147265077138851,
           "rrf_score": 0.015147265077138851,
@@ -2626,11 +2884,12 @@
           "text_preview": "% Poland (37) 19.00 % (71) 19.00 % South Africa (37) 27.00 % (86) 27.00 % Spain (5) 25.00 % (8) 25.00 % Ukraine (39) 18.00 % (39) 18.00 % United States 36 21.00 % 68 21.00 % Others (20) (9) Total 677 "
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013222591362126246,
           "rrf_score": 0.013222591362126246,
@@ -2643,11 +2902,12 @@
           "text_preview": "The reconciliation from operating income to net income (including non-controlling interests) is as follows: Year ended December 31, 2025 2024 2023 Operating income 3,628 3,310 2,340 Income from invest"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 94,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012777777777777777,
           "rrf_score": 0.012777777777777777,
@@ -2660,11 +2920,12 @@
           "text_preview": "mainly subject to foreign exchange exposure relating to the euro, Brazilian real, Canadian dollar, Indian rupee, South African rand, Mexican peso, Polish zloty, Argentinian peso and Ukrainian hryvnia "
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 199,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011744471744471744,
           "rrf_score": 0.011744471744471744,
@@ -2677,11 +2938,12 @@
           "text_preview": "capacity is focused around low-carbon, integrated production hubs in the U.S. and Brazil, both of which are important strategic markets for ArcelorMittal. The fair value of ArcelorMittal's investment "
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010941726088025572,
           "rrf_score": 0.010941726088025572,
@@ -2694,11 +2956,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 116,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012557377049180328,
           "rrf_score": 0.012557377049180328,
@@ -2711,11 +2974,12 @@
           "text_preview": "Compensation Content Annual statement from the Chairman of ARCG Committee Board of Directors Remuneration at a glance - senior management Overview of the Company's remuneration policy and rationale of"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009836065573770491,
           "rrf_score": 0.009836065573770491,
@@ -2726,11 +2990,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00967741935483871,
           "rrf_score": 0.00967741935483871,
@@ -2762,8 +3027,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        191,
+        204,
+        172,
+        203,
+        97,
+        101,
+        207,
+        209,
+        246
+      ],
+      "ranked_pages": [
         95,
         191,
         204,
@@ -2802,11 +3081,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016393442622950817,
           "rrf_score": 0.016393442622950817,
@@ -2819,11 +3099,12 @@
           "text_preview": "country of Luxembourg, all of its sales are considered to be export sales. Annual sales to a single individual customer did not exceed 5% of sales in any of the periods presented. Cost of sales Cost o"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 191,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013893495485535288,
           "rrf_score": 0.013893495485535288,
@@ -2836,11 +3117,12 @@
           "text_preview": "In addition, during 2025, the Company also initiated and partially completed the sale of two tubular products facilities ArcelorMittal Tubular Products Iasi (\"AMTPI\") and ArcelorMittal Tubular Product"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015238095238095238,
           "rrf_score": 0.015238095238095238,
@@ -2853,11 +3135,12 @@
           "text_preview": "of Africa 370 572 524 China 1,167 762 764 Kazakhstan2 — — 503 South Korea 261 337 410 India 435 128 102 Rest of Asia 745 1,005 1,340 Total Asia & Africa 5,500 5,363 6,250 Total 61,352 62,441 68,275 1."
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 172,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01339203815813612,
           "rrf_score": 0.01339203815813612,
@@ -2870,11 +3153,12 @@
           "text_preview": "Year ended December 31, Notes 2025 2024 2023 Sales 4.1 and 12.1 61,352 62,441 68,275 (including 6,025, 7,765 and 8,825 of sales to related parties for 2025, 2024 and 2023, respectively) Cost of sales "
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013277310924369748,
           "rrf_score": 0.013277310924369748,
@@ -2887,11 +3171,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013015873015873015,
           "rrf_score": 0.013015873015873015,
@@ -2904,11 +3189,12 @@
           "text_preview": "lower steel shipments, $0.2 billion impairment charge related to the divestment of the Company's steel and mining operations in Bosnia and $0.1 billion restructuring costs. Operating income in 2024 wa"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013221153846153846,
           "rrf_score": 0.013221153846153846,
@@ -2921,11 +3207,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 207,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013097713097713098,
           "rrf_score": 0.013097713097713098,
@@ -2938,11 +3225,12 @@
           "text_preview": "customers which are classified as unsatisfied performance obligations and recognized as liabilities in line with IFRS 15. The Company expects 100% of these unsatisfied performance obligations as of De"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 209,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012962962962962963,
           "rrf_score": 0.012962962962962963,
@@ -2955,11 +3243,12 @@
           "text_preview": "The movements in the allowance are calculated based on lifetime expected credit loss model for 2025, 2024 and 2023. The allowances in respect of trade accounts receivable during the periods presented "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010799438990182328,
           "rrf_score": 0.010799438990182328,
@@ -2999,8 +3288,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        102,
+        98,
+        174,
+        281,
+        173,
+        282,
+        223,
+        99,
+        101,
+        165
+      ],
+      "ranked_pages": [
         102,
         98,
         174,
@@ -3040,11 +3343,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 102,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016287678476996297,
           "rrf_score": 0.016287678476996297,
@@ -3057,11 +3361,12 @@
           "text_preview": "n o n - c o n t r o l l i n g s h a r e h o l d e r s i n s u b s i d i a r i e s . Equity Equity attributable to the equity holders of the parent increased to $54.5 billion as of December 31, 2025 fr"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 98,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016234796404019036,
           "rrf_score": 0.016234796404019036,
@@ -3074,11 +3379,12 @@
           "text_preview": "% Poland (37) 19.00 % (71) 19.00 % South Africa (37) 27.00 % (86) 27.00 % Spain (5) 25.00 % (8) 25.00 % Ukraine (39) 18.00 % (39) 18.00 % United States 36 21.00 % 68 21.00 % Others (20) (9) Total 677 "
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 174,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014857142857142857,
           "rrf_score": 0.014857142857142857,
@@ -3091,11 +3397,12 @@
           "text_preview": "Additional paid-in capital 25,250 27,190 Retained earnings 49,918 47,254 Reserves (20,622) (23,407) Equity attributable to the equity holders of the parent 54,466 49,223 Non-controlling interests 2,07"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 281,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01456838443139813,
           "rrf_score": 0.01456838443139813,
@@ -3108,11 +3415,12 @@
           "text_preview": "MCNs, ArcelorMittal delivered a total of 57,057,991 treasury shares (of which 9,396,120 to the Significant Shareholder) with a carrying amount of 1,534. The Company determined that the MCNs are a hybr"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 173,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014570361145703611,
           "rrf_score": 0.014570361145703611,
@@ -3125,11 +3433,12 @@
           "text_preview": "2,296 Total comprehensive income attributable to: Equity holders of the parent 5,937 (3,051) 2,177 Non-controlling interests 198 (49) 119 Total comprehensive income (loss) 6,135 (3,100) 2,296 The acco"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 282,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01325629914941422,
           "rrf_score": 0.01325629914941422,
@@ -3142,11 +3451,12 @@
           "text_preview": "2025 Net income (loss) attributable to non- controlling interests for the year ended December 31, 2024 Non- controlling interests at December 31, 2024 Net income (loss) attributable to non- controllin"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 223,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012722478576137113,
           "rrf_score": 0.012722478576137113,
@@ -3159,11 +3469,12 @@
           "text_preview": "Equity attributable to the equity holders of the parent 49,223 49,223 — — — — Non-controlling interests 2,063 2,063 — — — — Total equity 51,286 51,286 — — — — Total liabilities and equity 89,385 59,80"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 99,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01120225583183799,
           "rrf_score": 0.01120225583183799,
@@ -3176,11 +3487,12 @@
           "text_preview": "things, limit encumbrances on the assets of ArcelorMittal and its subsidiaries, the ability of ArcelorMittal’s subsidiaries to incur debt and the ability of ArcelorMittal and its subsidiaries to dispo"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009375,
           "rrf_score": 0.009375,
@@ -3191,11 +3503,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 165,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010261136712749617,
           "rrf_score": 0.010261136712749617,
@@ -3235,8 +3548,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        102,
+        273,
+        67,
+        26,
+        16,
+        105,
+        69,
+        272,
+        217,
+        7
+      ],
+      "ranked_pages": [
         102,
         273,
         67,
@@ -3275,11 +3602,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 102,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015989911727616643,
           "rrf_score": 0.015989911727616643,
@@ -3292,11 +3620,12 @@
           "text_preview": "for 2025 and 2024, respectively, and $0.3 billion of decarbonization capital expenditures for 2025 and 2024. See “Properties and capital expenditures—Capital expenditures” and \"—Outlook\" below. In 202"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 273,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015151515151515152,
           "rrf_score": 0.015151515151515152,
@@ -3309,11 +3638,12 @@
           "text_preview": "in the context of expansion and improvement projects. Capital expenditure commitments include 108 and 257 at December 31, 2025 and 2024, respectively, relating to AML in connection with Phase 2 expans"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 67,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015275142314990511,
           "rrf_score": 0.015275142314990511,
@@ -3326,11 +3656,12 @@
           "text_preview": "VdSA is equity accounted and ArcelorMittal’s total equity investment will be $0.15 billion. In August 2024, ArcelorMittal Brasil also signed contracts with Casa dos Ventos and Atlas Renewable Energy f"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013695652173913043,
           "rrf_score": 0.013695652173913043,
@@ -3343,11 +3674,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 16,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012511584800741427,
           "rrf_score": 0.012511584800741427,
@@ -3360,11 +3692,12 @@
           "text_preview": "in substantial provisions or losses being recorded. See \"—Key transactions and events in 2025— Recent developments\" and note 9.3 to the consolidated financial statements. ArcelorMittal’s strategic gro"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 105,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013121890547263683,
           "rrf_score": 0.013121890547263683,
@@ -3377,11 +3710,12 @@
           "text_preview": "In respect of non-exchange traded commodities, ArcelorMittal is exposed to volatility in the prices of raw materials such as iron ore (which is generally correlated with steel prices with a time lag) "
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012011922503725781,
           "rrf_score": 0.012011922503725781,
@@ -3394,11 +3728,12 @@
           "text_preview": "and grow initially to approximately 15 million tonnes of rolled products by the second half of 2026 in Hazira (phase 1) including automotive downstream and enhancements to iron ore operations, with es"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 272,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011128048780487804,
           "rrf_score": 0.011128048780487804,
@@ -3411,11 +3746,12 @@
           "text_preview": "claims. Following AAA's appeal in December 2024, AAA filed their first brief in March 2025, which quantified its damages claim at 475 plus interest. ArcelorMittal responded in July 2025. In October 20"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 217,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011254061078622483,
           "rrf_score": 0.011254061078622483,
@@ -3428,11 +3764,12 @@
           "text_preview": "of embedded and lifecycle emissions of the materials where steel compares favorably. The Company is committed to achieve group-wide net zero by 2050. These announced goals will require significant lon"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009523809523809523,
           "rrf_score": 0.009523809523809523,
@@ -3464,8 +3801,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        99,
+        100,
+        101,
+        236,
+        98,
+        229,
+        104,
+        199,
+        237,
+        231
+      ],
+      "ranked_pages": [
         99,
         100,
         101,
@@ -3504,11 +3855,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 99,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016086065573770493,
           "rrf_score": 0.016086065573770493,
@@ -3521,11 +3873,12 @@
           "text_preview": "2025 increased to $13.4 billion as compared to $11.6 billion as of December 31, 2024. See \"— Sources and uses of cash—Net cash used in financing activities\" and note 6.3 to the consolidated financial "
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 100,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01461569095977698,
           "rrf_score": 0.01461569095977698,
@@ -3538,11 +3891,12 @@
           "text_preview": "expenditures. Non-compliance with the covenants in the Company’s borrowing agreements entitles the lenders under such facilities to accelerate the Company’s repayment obligations. The Company was in c"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014090909090909091,
           "rrf_score": 0.014090909090909091,
@@ -3555,11 +3909,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 236,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013377679231337768,
           "rrf_score": 0.013377679231337768,
@@ -3572,11 +3927,12 @@
           "text_preview": "requirement is met through a combination of equity, bonds and other long-term and short-term borrowings. The Company monitors capital using a gearing ratio, being the ratio of net debt as a percentage"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 98,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013756613756613755,
           "rrf_score": 0.013756613756613755,
@@ -3589,11 +3945,12 @@
           "text_preview": "% Poland (37) 19.00 % (71) 19.00 % South Africa (37) 27.00 % (86) 27.00 % Spain (5) 25.00 % (8) 25.00 % Ukraine (39) 18.00 % (39) 18.00 % United States 36 21.00 % 68 21.00 % Others (20) (9) Total 677 "
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 229,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012855924978687126,
           "rrf_score": 0.012855924978687126,
@@ -3606,11 +3963,12 @@
           "text_preview": "covenant would entitle the lenders under such facility to accelerate repayment obligations. On December 28, 2023, and on March 4, 2024, AM Green Energy signed two INR7.5 billion loans to finance the d"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 104,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012778904665314401,
           "rrf_score": 0.012778904665314401,
@@ -3623,11 +3981,12 @@
           "text_preview": "ArcelorMittal faces foreign currency translation risk, which arises when ArcelorMittal translates the financial statements of its subsidiaries, denominated in currencies other than the U.S. dollar for"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 199,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010760401721664276,
           "rrf_score": 0.010760401721664276,
@@ -3640,11 +3999,12 @@
           "text_preview": "capacity is focused around low-carbon, integrated production hubs in the U.S. and Brazil, both of which are important strategic markets for ArcelorMittal. The fair value of ArcelorMittal's investment "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 237,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011447455386649041,
           "rrf_score": 0.011447455386649041,
@@ -3657,11 +4017,12 @@
           "text_preview": "and the EEX power indexes). As a general matter, ArcelorMittal is exposed to price volatility with respect to its purchases in the spot market, its long-term supply contracts and trading activities. I"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 231,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012512218963831867,
           "rrf_score": 0.012512218963831867,
@@ -3705,8 +4066,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        204,
+        97,
+        101,
+        191,
+        203,
+        207,
+        172,
+        209,
+        246
+      ],
+      "ranked_pages": [
         95,
         204,
         97,
@@ -3746,11 +4121,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016234796404019036,
           "rrf_score": 0.016234796404019036,
@@ -3763,11 +4139,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015633167023045853,
           "rrf_score": 0.015633167023045853,
@@ -3780,11 +4157,12 @@
           "text_preview": "of Africa 370 572 524 China 1,167 762 764 Kazakhstan2 — — 503 South Korea 261 337 410 India 435 128 102 Rest of Asia 745 1,005 1,340 Total Asia & Africa 5,500 5,363 6,250 Total 61,352 62,441 68,275 1."
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013859020310633213,
           "rrf_score": 0.013859020310633213,
@@ -3797,11 +4175,12 @@
           "text_preview": "lower steel shipments, $0.2 billion impairment charge related to the divestment of the Company's steel and mining operations in Bosnia and $0.1 billion restructuring costs. Operating income in 2024 wa"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013919413919413919,
           "rrf_score": 0.013919413919413919,
@@ -3814,11 +4193,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 191,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013301435406698564,
           "rrf_score": 0.013301435406698564,
@@ -3831,11 +4211,12 @@
           "text_preview": "In addition, during 2025, the Company also initiated and partially completed the sale of two tubular products facilities ArcelorMittal Tubular Products Iasi (\"AMTPI\") and ArcelorMittal Tubular Product"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013506493506493506,
           "rrf_score": 0.013506493506493506,
@@ -3848,11 +4229,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 207,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013089542036910458,
           "rrf_score": 0.013089542036910458,
@@ -3865,11 +4247,12 @@
           "text_preview": "customers which are classified as unsatisfied performance obligations and recognized as liabilities in line with IFRS 15. The Company expects 100% of these unsatisfied performance obligations as of De"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 172,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012375375850609275,
           "rrf_score": 0.012375375850609275,
@@ -3882,11 +4265,12 @@
           "text_preview": "Year ended December 31, Notes 2025 2024 2023 Sales 4.1 and 12.1 61,352 62,441 68,275 (including 6,025, 7,765 and 8,825 of sales to related parties for 2025, 2024 and 2023, respectively) Cost of sales "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 209,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012796525225526227,
           "rrf_score": 0.012796525225526227,
@@ -3899,11 +4283,12 @@
           "text_preview": "The movements in the allowance are calculated based on lifetime expected credit loss model for 2025, 2024 and 2023. The allowances in respect of trade accounts receivable during the periods presented "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011230648123852008,
           "rrf_score": 0.011230648123852008,
@@ -3944,8 +4329,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        26,
+        97,
+        95,
+        3,
+        220,
+        37,
+        189,
+        7,
+        86,
+        91
+      ],
+      "ranked_pages": [
         26,
         97,
         95,
@@ -3984,11 +4383,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015391705069124424,
           "rrf_score": 0.015391705069124424,
@@ -4001,11 +4401,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015172735760971055,
           "rrf_score": 0.015172735760971055,
@@ -4018,11 +4419,12 @@
           "text_preview": "lower steel shipments, $0.2 billion impairment charge related to the divestment of the Company's steel and mining operations in Bosnia and $0.1 billion restructuring costs. Operating income in 2024 wa"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014249684741488019,
           "rrf_score": 0.014249684741488019,
@@ -4035,11 +4437,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014578005115089514,
           "rrf_score": 0.014578005115089514,
@@ -4052,11 +4455,12 @@
           "text_preview": "INTRODUCTION Company overview ArcelorMittal is one of the world’s leading integrated steel and mining companies. ArcelorMittal is the largest steel producer in Europe and among the largest in the Amer"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 220,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013095238095238096,
           "rrf_score": 0.013095238095238096,
@@ -4069,11 +4473,12 @@
           "text_preview": "Impairment charges and reversals relating to property, plant and equipment and intangibles (excluding goodwill) were as follows for the years ended December 31, 2025, 2024 and 2023: 2025 In 2025, the "
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 37,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012102673227822849,
           "rrf_score": 0.012102673227822849,
@@ -4086,11 +4491,12 @@
           "text_preview": "retrospectively following a comprehensive review that extends beyond the publication of the annual report. All data is based on ArcelorMittal Group (excluding joint ventures and associates) and includ"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 189,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.010822814399251986,
           "rrf_score": 0.010822814399251986,
@@ -4103,11 +4509,12 @@
           "text_preview": "acquired. The Company concluded that the acquisition of Euler Hermes RE was not a business combination as the transaction did not include the acquisition of any strategic, operational and resource man"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009836065573770491,
           "rrf_score": 0.009836065573770491,
@@ -4118,11 +4525,12 @@
           "text_preview": "Key transactions and events in 2025 During 2025, ArcelorMittal completed several acquisitions, capital market, share buyback transactions and divestment processes. Please refer to notes 2.2.4, 2.3, 6."
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 86,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.011313291139240506,
           "rrf_score": 0.011313291139240506,
@@ -4135,11 +4543,12 @@
           "text_preview": "ArcelorMittal’s sales are made based on shorter-term purchase orders as well as some longer-term contracts to certain industrial customers, particularly in the automotive industry. Steel price surchar"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 91,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.009375,
           "rrf_score": 0.009375,
@@ -4178,8 +4587,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        69,
+        3,
+        26,
+        97,
+        59,
+        70,
+        86,
+        220,
+        95,
+        9
+      ],
+      "ranked_pages": [
         69,
         3,
         26,
@@ -4218,11 +4641,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 69,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015099223468507332,
           "rrf_score": 0.015099223468507332,
@@ -4235,11 +4659,12 @@
           "text_preview": "reserves and resources ArcelorMittal has iron ore production facilities in North America (Canada and Mexico), South America (Brazil), Europe (Ukraine), Africa (Liberia), and in India through its joint"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01543560606060606,
           "rrf_score": 0.01543560606060606,
@@ -4252,11 +4677,12 @@
           "text_preview": "INTRODUCTION Company overview ArcelorMittal is one of the world’s leading integrated steel and mining companies. ArcelorMittal is the largest steel producer in Europe and among the largest in the Amer"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014570361145703611,
           "rrf_score": 0.014570361145703611,
@@ -4269,11 +4695,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.0151288056206089,
           "rrf_score": 0.0151288056206089,
@@ -4286,11 +4713,12 @@
           "text_preview": "for the year ended December 31, (in millions of USD unless otherwise shown) 2025 2024 change % change Sales 10,501 10,722 (221) (2.1) % Depreciation (235) (178) (57) 32.0 % Impairment (17) — (17) (100"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014799910574558461,
           "rrf_score": 0.014799910574558461,
@@ -4303,11 +4731,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 70,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014559721011333914,
           "rrf_score": 0.014559721011333914,
@@ -4320,11 +4749,12 @@
           "text_preview": "The following tables provide an overview of ArcelorMittal’s principal mining operations. The production of Run of Mine (\"ROM\") iron ore and coal is that which is attributable to ArcelorMittal based on"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 86,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014439324116743472,
           "rrf_score": 0.014439324116743472,
@@ -4337,11 +4767,12 @@
           "text_preview": "t h e f o u r t h - q u a r t e r lows, supporting a rebound in steel prices and spreads. However, as economic growth weakened across the Company’s core developed markets—due to the lagged effects o f"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 220,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012878048780487806,
           "rrf_score": 0.012878048780487806,
@@ -4354,11 +4785,12 @@
           "text_preview": "Impairment charges and reversals relating to property, plant and equipment and intangibles (excluding goodwill) were as follows for the years ended December 31, 2025, 2024 and 2023: 2025 In 2025, the "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01256578947368421,
           "rrf_score": 0.01256578947368421,
@@ -4371,11 +4803,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 9,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013271604938271606,
           "rrf_score": 0.013271604938271606,
@@ -4420,8 +4853,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        101,
+        246,
+        98,
+        220,
+        275,
+        99,
+        7,
+        204,
+        179
+      ],
+      "ranked_pages": [
         95,
         101,
         246,
@@ -4460,11 +4907,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014872224549643905,
           "rrf_score": 0.014872224549643905,
@@ -4477,11 +4925,12 @@
           "text_preview": "and Serra Azul expansion). Selling, general and administrative expenses Selling, general and administrative expenses (\"SG&A\") were $2.6 billion in 2025 as compared to $2.5 billion in 2024. SG&A as a p"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015169398907103825,
           "rrf_score": 0.015169398907103825,
@@ -4494,11 +4943,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015089285714285715,
           "rrf_score": 0.015089285714285715,
@@ -4511,11 +4961,12 @@
           "text_preview": "Undiscounted amounts related to lease contracts not yet commenced and therefore not included in the recognized lease liabilities as of December 31, 2025 and December 31, 2024, to which the Company is "
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 98,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015003261578604044,
           "rrf_score": 0.015003261578604044,
@@ -4528,11 +4979,12 @@
           "text_preview": "% Poland (37) 19.00 % (71) 19.00 % South Africa (37) 27.00 % (86) 27.00 % Spain (5) 25.00 % (8) 25.00 % Ukraine (39) 18.00 % (39) 18.00 % United States 36 21.00 % 68 21.00 % Others (20) (9) Total 677 "
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 220,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013271604938271606,
           "rrf_score": 0.013271604938271606,
@@ -4545,11 +4997,12 @@
           "text_preview": "Impairment charges and reversals relating to property, plant and equipment and intangibles (excluding goodwill) were as follows for the years ended December 31, 2025, 2024 and 2023: 2025 In 2025, the "
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 275,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012337662337662338,
           "rrf_score": 0.012337662337662338,
@@ -4562,11 +5015,12 @@
           "text_preview": "at the statutory rates applicable in the countries where the Company operates to the total income tax expense as calculated: Year ended December 31, 2025 2024 2023 Net income (including non- controlli"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 99,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.0118781006378455,
           "rrf_score": 0.0118781006378455,
@@ -4579,11 +5033,12 @@
           "text_preview": "things, limit encumbrances on the assets of ArcelorMittal and its subsidiaries, the ability of ArcelorMittal’s subsidiaries to incur debt and the ability of ArcelorMittal and its subsidiaries to dispo"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00909090909090909,
           "rrf_score": 0.00909090909090909,
@@ -4594,11 +5049,12 @@
           "text_preview": "Key transactions and events in 2025 During 2025, ArcelorMittal completed several acquisitions, capital market, share buyback transactions and divestment processes. Please refer to notes 2.2.4, 2.3, 6."
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00923076923076923,
           "rrf_score": 0.00923076923076923,
@@ -4609,11 +5065,12 @@
           "text_preview": "The reconciliation from operating income to net income (including non-controlling interests) is as follows: Year ended December 31, 2025 2024 2023 Operating income 3,628 3,310 2,340 Income from invest"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 179,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.008955223880597015,
           "rrf_score": 0.008955223880597015,
@@ -4654,8 +5111,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        204,
+        94,
+        132,
+        97,
+        207,
+        96,
+        203,
+        206,
+        172
+      ],
+      "ranked_pages": [
         95,
         204,
         94,
@@ -4694,11 +5165,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.016393442622950817,
           "rrf_score": 0.016393442622950817,
@@ -4711,11 +5183,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015003261578604044,
           "rrf_score": 0.015003261578604044,
@@ -4728,11 +5201,12 @@
           "text_preview": "of Africa 370 572 524 China 1,167 762 764 Kazakhstan2 — — 503 South Korea 261 337 410 India 435 128 102 Rest of Asia 745 1,005 1,340 Total Asia & Africa 5,500 5,363 6,250 Total 61,352 62,441 68,275 1."
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 94,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012693541637606361,
           "rrf_score": 0.012693541637606361,
@@ -4745,11 +5219,12 @@
           "text_preview": "Financial Review— Operating Results\" in the Annual Report for the year ended December 31, 2024. ArcelorMittal reports its operations in six reportable segments: North America, Brazil, Europe, India an"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 132,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.0125,
           "rrf_score": 0.0125,
@@ -4762,11 +5237,12 @@
           "text_preview": "In 2025, several entities and employees in several countries negotiated new or the renewal of CLAs. Employees of ArcelorMittal's North America segment continued to work under collective agreements tha"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014632034632034632,
           "rrf_score": 0.014632034632034632,
@@ -4779,11 +5255,12 @@
           "text_preview": "for the year ended December 31, (in millions of USD unless otherwise shown) 2025 2024 change % change Sales 10,501 10,722 (221) (2.1) % Depreciation (235) (178) (57) 32.0 % Impairment (17) — (17) (100"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 207,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013633923778851316,
           "rrf_score": 0.013633923778851316,
@@ -4796,11 +5273,12 @@
           "text_preview": "customers which are classified as unsatisfied performance obligations and recognized as liabilities in line with IFRS 15. The Company expects 100% of these unsatisfied performance obligations as of De"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 96,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01356125356125356,
           "rrf_score": 0.01356125356125356,
@@ -4813,11 +5291,12 @@
           "text_preview": "April 1, 2025 and June 18, 2025, respectively (see note 2.2.4 to the consolidated financial statements), and 2.9% higher average steel selling prices. Operating income of $2.2 billion in 2025 included"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01165652467883705,
           "rrf_score": 0.01165652467883705,
@@ -4830,11 +5309,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 206,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01266499582289056,
           "rrf_score": 0.01266499582289056,
@@ -4847,11 +5327,12 @@
           "text_preview": "3.4 Disaggregated revenue Disaggregated revenue The tables below summarize the disaggregated revenue recognized from contracts with customers: Year ended December 31, 2025 North America Brazil Europe "
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 172,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.00967741935483871,
           "rrf_score": 0.00967741935483871,
@@ -4896,8 +5377,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        95,
+        130,
+        204,
+        246,
+        119,
+        203,
+        101,
+        172,
+        191,
+        207
+      ],
+      "ranked_pages": [
         95,
         130,
         204,
@@ -4938,11 +5433,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 95,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01597542242703533,
           "rrf_score": 0.01597542242703533,
@@ -4955,11 +5451,12 @@
           "text_preview": "December 31, 2025, and 2024: (in $ millions) Sales for the year ended December 31,1 Segment 2025 2024 change % change North America 12,335 11,896 439 3.7 % Brazil 11,172 12,401 (1,229) (9.9) % Europe "
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 130,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015896671634376552,
           "rrf_score": 0.015896671634376552,
@@ -4972,11 +5469,12 @@
           "text_preview": "Employees As of December 31, 2025, ArcelorMittal employed approximately 125,554 full time equivalent (\"FTE\") employees directly, as well as a large number of contractors. The Company recruits, hires, "
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 204,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015474520804114072,
           "rrf_score": 0.015474520804114072,
@@ -4989,11 +5487,12 @@
           "text_preview": "of Africa 370 572 524 China 1,167 762 764 Kazakhstan2 — — 503 South Korea 261 337 410 India 435 128 102 Rest of Asia 745 1,005 1,340 Total Asia & Africa 5,500 5,363 6,250 Total 61,352 62,441 68,275 1."
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 246,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015625,
           "rrf_score": 0.015625,
@@ -5006,11 +5505,12 @@
           "text_preview": "Undiscounted amounts related to lease contracts not yet commenced and therefore not included in the recognized lease liabilities as of December 31, 2025 and December 31, 2024, to which the Company is "
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 119,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014218381775333858,
           "rrf_score": 0.014218381775333858,
@@ -5023,11 +5523,12 @@
           "text_preview": "Except for the Executive Chairman and the CEO, members of the Board of Directors have not received any remuneration from any subsidiary of the Group in 2025. The annual base salary for the last five f"
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 203,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013065810593900481,
           "rrf_score": 0.013065810593900481,
@@ -5040,11 +5541,12 @@
           "text_preview": "The following table summarizes certain financial data for ArcelorMittal’s operations by reportable segments. North America Brazil Europe India and JVs Sustainable solutions Mining Others 1 Elimination"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 101,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012996727442730248,
           "rrf_score": 0.012996727442730248,
@@ -5057,11 +5559,12 @@
           "text_preview": "was approved on May 6, 2025 at the annual general meeting of shareholders. The dividend amounted to $421 million. In addition, during 2025, ArcelorMittal repurchased 6.8 million shares under the share"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 172,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012091356918943126,
           "rrf_score": 0.012091356918943126,
@@ -5074,11 +5577,12 @@
           "text_preview": "Year ended December 31, Notes 2025 2024 2023 Sales 4.1 and 12.1 61,352 62,441 68,275 (including 6,025, 7,765 and 8,825 of sales to related parties for 2025, 2024 and 2023, respectively) Cost of sales "
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 191,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012395604395604396,
           "rrf_score": 0.012395604395604396,
@@ -5091,11 +5595,12 @@
           "text_preview": "In addition, during 2025, the Company also initiated and partially completed the sale of two tubular products facilities ArcelorMittal Tubular Products Iasi (\"AMTPI\") and ArcelorMittal Tubular Product"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 207,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012498090145148969,
           "rrf_score": 0.012498090145148969,
@@ -5141,8 +5646,22 @@
         }
       ],
       "num_results": 10,
+      "num_distinct_units": 10,
+      "num_duplicate_chunks": 0,
       "num_invalid_metadata": 0,
       "retrieved_pages": [
+        26,
+        3,
+        91,
+        96,
+        7,
+        9,
+        40,
+        97,
+        59,
+        88
+      ],
+      "ranked_pages": [
         26,
         3,
         91,
@@ -5181,11 +5700,12 @@
       },
       "retrieved": [
         {
-          "rank": 1,
+          "chunk_rank": 1,
+          "unit_rank": 1,
           "source": "annual_report.pdf",
           "page": 26,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014677419354838711,
           "rrf_score": 0.014677419354838711,
@@ -5198,11 +5718,12 @@
           "text_preview": "tonnes of crude steel for the year ended December 31, 2025 (76.7 million tonnes in 2024). Steel shipments for the year ended December 31, 2025 totaled 54.0 million tonnes (54.3 million tonnes in 2024)"
         },
         {
-          "rank": 2,
+          "chunk_rank": 2,
+          "unit_rank": 2,
           "source": "annual_report.pdf",
           "page": 3,
           "relevant": true,
-          "new_relevant_page": true,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01525735294117647,
           "rrf_score": 0.01525735294117647,
@@ -5215,11 +5736,12 @@
           "text_preview": "INTRODUCTION Company overview ArcelorMittal is one of the world’s leading integrated steel and mining companies. ArcelorMittal is the largest steel producer in Europe and among the largest in the Amer"
         },
         {
-          "rank": 3,
+          "chunk_rank": 3,
+          "unit_rank": 3,
           "source": "annual_report.pdf",
           "page": 91,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.015550351288056204,
           "rrf_score": 0.015550351288056204,
@@ -5232,11 +5754,12 @@
           "text_preview": "in 2024 to $1,266/t in 2025 ($1,266/t in 2023) and medium carbon ferro manganese prices decreased only slightly from $1,790/t in 2024 to $1,785/t in 2025 ($1,832/t in 2023). Demand for manganese alloy"
         },
         {
-          "rank": 4,
+          "chunk_rank": 4,
+          "unit_rank": 4,
           "source": "annual_report.pdf",
           "page": 96,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.014130434782608696,
           "rrf_score": 0.014130434782608696,
@@ -5249,11 +5772,12 @@
           "text_preview": "North America Performance for the year ended December 31, (in millions of USD unless otherwise shown) 2025 2024 change % change Sales 12,335 11,896 439 3.7 % Depreciation (677) (509) (168) 33.0 % Oper"
         },
         {
-          "rank": 5,
+          "chunk_rank": 5,
+          "unit_rank": 5,
           "source": "annual_report.pdf",
           "page": 7,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012829226847918436,
           "rrf_score": 0.012829226847918436,
@@ -5266,11 +5790,12 @@
           "text_preview": "Key transactions and events in 2025 During 2025, ArcelorMittal completed several acquisitions, capital market, share buyback transactions and divestment processes. Please refer to notes 2.2.4, 2.3, 6."
         },
         {
-          "rank": 6,
+          "chunk_rank": 6,
+          "unit_rank": 6,
           "source": "annual_report.pdf",
           "page": 9,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01273809523809524,
           "rrf_score": 0.01273809523809524,
@@ -5283,11 +5808,12 @@
           "text_preview": "economic weakness, contributing to weaker demand, increased exports, and lower prices (regionally and/or globally). China’s reduced steel demand since the second quarter of 2024 has not been matched b"
         },
         {
-          "rank": 7,
+          "chunk_rank": 7,
+          "unit_rank": 7,
           "source": "annual_report.pdf",
           "page": 40,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.012382149591451917,
           "rrf_score": 0.012382149591451917,
@@ -5300,11 +5826,12 @@
           "text_preview": "to crude steel production declining more sharply than emissions, particularly in the integrated route where a significant proportion of emissions is fixed and does not decrease in line with output. Te"
         },
         {
-          "rank": 8,
+          "chunk_rank": 8,
+          "unit_rank": 8,
           "source": "annual_report.pdf",
           "page": 97,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.013478915662650602,
           "rrf_score": 0.013478915662650602,
@@ -5317,11 +5844,12 @@
           "text_preview": "n d t h e c o n c e n t r a t o r continues to ramps up, supporting improved price realization. Iron ore production in 2024 was negatively impacted by rail disruptions at AMMC due to wildfires near Po"
         },
         {
-          "rank": 9,
+          "chunk_rank": 9,
+          "unit_rank": 9,
           "source": "annual_report.pdf",
           "page": 59,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01144399460188934,
           "rrf_score": 0.01144399460188934,
@@ -5334,11 +5862,12 @@
           "text_preview": "primarily provides distribution of long and flat products as well as value- added and customized steel solutions through further steel processing to meet specific customer requirements. It is a growth"
         },
         {
-          "rank": 10,
+          "chunk_rank": 10,
+          "unit_rank": 10,
           "source": "annual_report.pdf",
           "page": 88,
           "relevant": false,
-          "new_relevant_page": false,
+          "duplicate": false,
           "invalid_metadata": false,
           "score": 0.01214896214896215,
           "rrf_score": 0.01214896214896215,

@@ -146,8 +146,42 @@ def test_duplicate_chunks_do_not_inflate_metrics():
 
     assert scored["metrics"]["recall"]["3"] == 0.5
     assert scored["metrics"]["page_recall"]["3"] == 0.5
-    assert scored["metrics"]["precision"]["3"] == pytest.approx(0.3333)
-    assert [r["new_relevant_page"] for r in scored["retrieved"]] == [True, False, False]
+    # One distinct page, and it is relevant.
+    assert scored["metrics"]["precision"]["3"] == 1.0
+    assert scored["num_distinct_units"] == 1
+    assert scored["num_duplicate_chunks"] == 2
+    assert scored["ranked_pages"] == [10]
+    assert [r["duplicate"] for r in scored["retrieved"]] == [False, True, True]
+    assert [r["unit_rank"] for r in scored["retrieved"]] == [1, None, None]
+    assert [r["chunk_rank"] for r in scored["retrieved"]] == [1, 2, 3]
+
+
+def test_duplicate_irrelevant_chunks_do_not_push_relevant_pages_out_of_top_k():
+    bench = make_benchmark()
+    results = [chunk(99, text="a"), chunk(99, text="b"), chunk(99, text="c"), chunk(30), chunk(10)]
+
+    scored = evaluate_question(question(bench, "Q002"), results, [1, 2, 3, 5], SOURCE)
+
+    assert scored["ranked_pages"] == [99, 30, 10]
+    assert scored["first_relevant_rank"] == 2
+    assert scored["reciprocal_rank"] == 0.5
+    assert scored["metrics"]["recall"] == {"1": 0.0, "2": 0.5, "3": 1.0, "5": 1.0}
+    assert scored["metrics"]["precision"] == {"1": 0.0, "2": 0.5, "3": 0.6667, "5": 0.6667}
+
+
+def test_multiple_pages_with_duplicates_and_fewer_than_k_distinct_units():
+    bench = make_benchmark()
+    results = [chunk(10), chunk(30), chunk(10), chunk(30)]
+
+    report = evaluate_results(bench, {"Q001": [chunk(10)], "Q002": results}, [1, 5])
+    scored = report["questions"][1]
+
+    assert scored["num_distinct_units"] == 2
+    assert scored["metrics"]["recall"] == {"1": 0.5, "5": 1.0}
+    assert scored["metrics"]["page_recall"] == {"1": 0.5, "5": 1.0}
+    assert scored["metrics"]["precision"] == {"1": 1.0, "5": 1.0}
+    assert report["summary"]["questions_with_fewer_than_max_k_units"] == ["Q001", "Q002"]
+    assert report["summary"]["num_duplicate_chunks"] == 2
 
 
 def test_ranking_order_is_preserved_not_resorted_by_score():
@@ -231,7 +265,7 @@ def test_unanswerable_questions_excluded_from_averages():
     assert summary["overall"]["precision"] == {"1": 0.5, "3": 0.75}
     assert summary["by_category"]["multi_hop"]["mrr"] == 0.5
     assert "unanswerable" not in summary["by_category"]
-    assert summary["questions_with_fewer_than_max_k_results"] == ["Q001", "Q002"]
+    assert summary["questions_with_fewer_than_max_k_units"] == ["Q001", "Q002"]
 
 
 def test_missing_results_for_answerable_question_raises():

@@ -2,7 +2,7 @@
   "benchmark_name": "InsightRAG Annual Report Benchmark v1",
   "benchmark_version": "1.0",
   "source_document": "annual_report.pdf",
-  "timestamp": "2026-11-15T09:29:29+00:00",
+  "timestamp": "2026-11-15T09:51:14+00:00",
   "config": {
     "strategy": "hybrid_rrf+rerank",
     "description": "Assistant retrieval stage (app/main.py): hybrid BM25+vector RRF with page diversity, then cross-encoder rerank",
@@ -167,7 +167,8 @@
     }
   },
   "questions_with_no_relevant_result": [],
-  "questions_with_fewer_than_max_k_results": [],
+  "questions_with_fewer_than_max_k_units": [],
+  "num_duplicate_chunks": 0,
   "num_results_with_invalid_metadata": 0,
-  "notes": "Metrics cover answerable questions only; unanswerable questions are excluded and these numbers say nothing about abstention. recall = fact-level recall; page_recall = share of expected_pages retrieved; precision = distinct relevant pages / min(K, results returned); relevance is page-level."
+  "notes": "Metrics cover answerable questions only; unanswerable questions are excluded and these numbers say nothing about abstention. recall = fact-level recall; page_recall = share of expected_pages retrieved; precision = relevant pages in top K / min(K, distinct pages returned). K counts distinct (source, page) units in first-occurrence order, not raw chunks; relevance is page-level."
 }

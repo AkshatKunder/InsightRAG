@@ -47,45 +47,68 @@ metric functions. `retrieval_evaluator.py` matches results to ground truth and
 aggregates the scores. Both can be used without models:
 `evaluate_results(benchmark, {question_id: ranked_results}, k_values)`.
 
-## Evidence units and relevance
+## Evidence unit and the meaning of K
 
 The benchmark records evidence per **page**, so the evidence unit is a
-distinct `(source, page)` pair:
+distinct `(source, page)` pair. All metrics use this one unit.
 
-- A retrieved chunk is **relevant** when its `source` file name equals the
-  benchmark's `source_document` (`annual_report.pdf`; directory prefixes are
-  ignored) **and** its `page` is one of the question's *relevant pages*.
-- **Relevant pages** = `expected_pages` ∪ every page in `expected_facts[].pages`.
-  The benchmark lists every page where a fact can be found, so a retriever
-  that finds total sales on page 172 instead of page 95 is credited.
-- Several chunks from the same page are **one** evidence unit and can be
-  counted only once. Later chunks from that page still take up a rank, so they
-  lower precision instead of raising it.
-- Results are scored **in the order the retriever returns them**. Scores are
-  stored but never used to reorder results or to decide relevance (there are no score thresholds).
-- A result with a missing or invalid `source` or `page` (missing, not an
-  integer, < 1) keeps its rank, is never relevant, and is counted in
-  `num_invalid_metadata`.
+1. Each retrieved chunk is mapped to `(source file name, page)`. Directory
+   prefixes are ignored, so `data/documents/annual_report.pdf` matches the
+   benchmark's `source_document` `annual_report.pdf`.
+2. The ranked chunk list is collapsed into a **ranking of distinct units**:
+   each `(source, page)` stays at the position of its first chunk, and later
+   chunks from the same page are dropped. The order is otherwise exactly the
+   retriever's. Scores are stored but never used to reorder results or decide
+   relevance (there are no score thresholds).
+3. A chunk with a missing or invalid `source` or `page` (missing, not an
+   integer, < 1) cannot be matched to a page. It stays in the ranking as its
+   own non-relevant unit and is counted in `num_invalid_metadata`.
+
+**K is a number of distinct units, not chunks.** "Top K" means the first K
+distinct pages of that ranking. Example: chunks from pages `[9, 9, 9, 95]`
+become the ranking `[9, 95]`, so page 95 is at position 2 and is inside the top 2.
+Duplicate chunks therefore neither inflate a score nor push other pages out of the top K.
+
+In the detailed results, each chunk has `chunk_rank` (its raw position),
+`unit_rank` (its position in the distinct ranking, or `null` for a duplicate)
+and `duplicate`. Each question has `ranked_pages` (the distinct ranking),
+`num_distinct_units` and `num_duplicate_chunks`.
+
+A unit is **relevant** when its source matches `source_document` and its page
+is one of the question's **relevant pages** = `expected_pages` ∪ every page in
+`expected_facts[].pages`. The benchmark lists every page where a fact can be
+found, so a retriever that finds total sales on page 172 instead of page 95 is credited.
 
 ## Metric definitions
 
-For one question with ranked results r₁, r₂, …:
+For one answerable question, let *U* be the distinct-unit ranking, *U*ₖ its
+first K units, *R* the set of relevant pages, and *F* the list of expected
+facts (each with its set of pages):
 
 | Metric | Definition |
 |---|---|
-| **Recall@K** (headline) | Share of the question's `expected_facts` with at least one of their pages among the top K results. Fact-level: a fact counts as found if any page that states it is retrieved. |
-| **Page recall@K** | Distinct `expected_pages` in the top K ÷ number of `expected_pages`. Stricter: it asks for every listed page. |
-| **Precision@K** | Distinct relevant pages in the top K ÷ min(K, number of results returned). |
-| **Reciprocal rank** | 1 ÷ rank of the first relevant result; 0 if none is relevant. |
-| **MRR** | Mean reciprocal rank over the evaluated questions, computed over the full returned list (depth max(K)). |
+| **Recall@K** (headline) | \|{f ∈ F : f's pages ∩ *U*ₖ ≠ ∅}\| ÷ \|F\|: the share of expected facts with at least one of their pages in the top K. |
+| **Page recall@K** | \|`expected_pages` ∩ *U*ₖ\| ÷ \|`expected_pages`\|. Stricter: every listed page must be retrieved. |
+| **Precision@K** | \|*R* ∩ *U*ₖ\| ÷ min(K, \|*U*\|): the share of the top-K distinct units that are relevant. If fewer than K distinct units were returned, the denominator is the number returned. |
+| **Reciprocal rank** | 1 ÷ position in *U* of the first relevant unit; 0 if none. |
+| **MRR** | Mean reciprocal rank over the evaluated questions, using the whole returned ranking. |
 
-Overall and per-category values are unweighted means over questions.
+Recall and precision count the same thing (relevant units in *U*ₖ); they
+differ only in the denominator. Overall and per-category values are unweighted
+means over questions.
 
 Why fact-level recall is the headline: page recall penalises a retriever for
 not returning *every* page where a fact is repeated. For example, Q006 lists
 sales on pages 95 and 172; one of them is enough to answer the question. Fact
 recall asks whether each required piece of evidence was found at least once,
 which is what the answer depends on. Page recall is kept for completeness.
+
+**Retrieval depth.** The CLI asks the pipeline for max(K) chunks. Hybrid
+retrieval already returns one chunk per page, so this gives max(K) distinct
+units. A strategy that returns several chunks per page (for example plain BM25
+or vector search, in a later task) yields fewer distinct units than chunks.
+It should then be asked for more chunks so that the top K units are filled.
+`questions_with_fewer_than_max_k_units` in the summary lists any question where that happened.
 
 ## Unanswerable questions
 
@@ -102,18 +125,17 @@ they are excluded from every average. The summary reports
   of that page (for example, a chunk from page 95 that holds segment data rather
   than the total-sales row). Finer matching, such as checking the chunk text
   against `supporting_evidence` excerpts or fact values, is future work.
-- **Relevance is only as complete as the benchmark's page lists.** A page that
-  states the fact but is not listed counts as irrelevant. Example: the
-  verification notes say the page 3 KPI graphic also shows 2025/2024 shipments
-  (54.0 / 54.3 Mt) and 2024 iron ore (42.4 Mt). Q017 and Q018 list only page 95,
-  so retrieving page 3 for them is not credited. The ground truth was left
-  unchanged; if it is extended, do it in a new benchmark version.
-- **Precision is low by construction.** Most questions have 1–3 relevant
-  pages, so Precision@10 cannot exceed about 0.1–0.3 even for a perfect
-  retriever. Compare precision between strategies, not against 1.0.
-- **Hybrid retrieval returns one chunk per page.** This pipeline therefore
-  never produces duplicate pages. The duplicate handling matters for
-  strategies without page diversity (plain BM25 or vector search).
+- **Relevance is only as complete as the benchmark's page lists.** A page
+  that states a fact but is not listed for it counts as irrelevant. Known case:
+  page 3 (the "Company overview" KPI bar chart) shows 2025 and 2024 steel
+  shipments (54.0 / 54.3 Mt) and iron ore production (48.8 / 42.4 Mt), but
+  Q017 and Q018 list only page 95, so page 3 is not credited for them (the
+  same facts do list page 3 in Q009 and Q022). Benchmark v1 is left unchanged;
+  the fix is proposed for a v2.
+- **Precision is low when the retriever returns K pages.** Most questions have
+  1–3 relevant pages, so a retriever that returns 10 distinct pages cannot
+  score above about 0.1–0.3 Precision@10. Compare precision between
+  strategies, not against 1.0.
 - **Small sample.** 22 questions, 3–5 per category; one question moves a
   category average by 20–33%.
 - **Deterministic but environment-dependent.** Results depend on the local

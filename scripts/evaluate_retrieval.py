@@ -153,10 +153,10 @@ def format_summary(report: dict) -> str:
             + f"{values['mrr']:>9.3f}{values['num_questions']:>4}"
         )
 
-    lines += ["", "Per question (first relevant rank, relevant pages vs retrieved pages):"]
+    lines += ["", "Per question (first relevant rank, relevant pages vs top-K distinct pages):"]
     for question in report["questions"]:
         rank = question["first_relevant_rank"]
-        top = question["retrieved_pages"][: int(ks[-1])]
+        top = question["ranked_pages"][: int(ks[-1])]
         lines.append(
             f"  {question['id']} {question['category']:<12} rank={rank if rank is not None else '-':<3} "
             f"relevant={question['relevant_pages']} retrieved={top}"
@@ -164,6 +164,8 @@ def format_summary(report: dict) -> str:
 
     misses = summary["questions_with_no_relevant_result"]
     lines += ["", f"No relevant result in top {ks[-1]}: {', '.join(misses) if misses else 'none'}"]
+    if summary["num_duplicate_chunks"]:
+        lines.append(f"Duplicate chunks collapsed into their page: {summary['num_duplicate_chunks']}")
     if summary["num_results_with_invalid_metadata"]:
         lines.append(f"Results with invalid source/page metadata: {summary['num_results_with_invalid_metadata']}")
     lines.append("Note: unanswerable questions are excluded; these metrics do not measure abstention.")

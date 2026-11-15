@@ -6,8 +6,11 @@ or rerank anything: callers pass the ranked results for each question (or a
 
 Relevance (see data/evaluation/retrieval_evaluation.md for the full rationale):
 
-* Evidence unit = a distinct ``(source, page)`` pair. Several chunks from the
-  same page are one unit, so duplicates never inflate a score.
+* Evidence unit = a distinct ``(source, page)`` pair. The ranked chunks are
+  collapsed into a ranking of distinct units (each page at its first
+  occurrence, order otherwise preserved; a chunk with unusable metadata is its
+  own non-relevant unit). **K counts positions in that ranking**, so "top K"
+  means the first K distinct pages, and all metrics use the same unit.
 * A retrieved chunk is relevant when its source file name equals the
   benchmark's ``source_document`` and its page is one of the question's
   *relevant pages*: ``expected_pages`` plus every page listed in an
@@ -16,8 +19,8 @@ Relevance (see data/evaluation/retrieval_evaluation.md for the full rationale):
 * Recall@K is fact-level: the share of ``expected_facts`` with at least one of
   their pages in the top K. Page recall (share of ``expected_pages`` retrieved)
   is reported alongside it.
-* Precision@K = distinct relevant pages in the top K / min(K, results returned).
-* Reciprocal rank = 1 / rank of the first relevant chunk (0 if none).
+* Precision@K = relevant units in the top K / min(K, number of distinct units).
+* Reciprocal rank = 1 / position of the first relevant unit (0 if none).
 
 Unanswerable questions have no evidence and are excluded from every average.
 """
@@ -31,6 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePath
 
 from app.evaluation.retrieval_metrics import (
+    deduplicate_ranking,
     first_relevant_rank,
     group_recall_at_k,
     mean_reciprocal_rank,
@@ -174,20 +178,28 @@ def evaluate_question(
 
     keys = [evidence_key(result) for result in results]
 
+    # Ranking of distinct evidence units: the unit of K for every metric.
+    ranking = deduplicate_ranking(keys)
+
     retrieved = []
-    seen_relevant: set[EvidenceKey] = set()
-    for rank, (result, key) in enumerate(zip(results, keys), start=1):
-        relevant = key is not None and key in relevant_keys
+    seen: set[EvidenceKey] = set()
+    unit_rank = 0
+    for chunk_rank, (result, key) in enumerate(zip(results, keys), start=1):
+        duplicate = key is not None and key in seen
+        if not duplicate:
+            unit_rank += 1
+            if key is not None:
+                seen.add(key)
         entry = {
-            "rank": rank,
+            "chunk_rank": chunk_rank,
+            # Position in the distinct-unit ranking (what K counts); None for a duplicate chunk.
+            "unit_rank": None if duplicate else unit_rank,
             "source": result.get("source") if isinstance(result, Mapping) else None,
             "page": result.get("page") if isinstance(result, Mapping) else None,
-            "relevant": relevant,
-            "new_relevant_page": relevant and key not in seen_relevant,
+            "relevant": key is not None and key in relevant_keys,
+            "duplicate": duplicate,
             "invalid_metadata": key is None,
         }
-        if relevant:
-            seen_relevant.add(key)
         if isinstance(result, Mapping):
             for field in _SCORE_FIELDS:
                 value = result.get(field)
@@ -218,9 +230,12 @@ def evaluate_question(
             for (label, pages), keys_ in zip(groups, group_keys)
         ],
         "num_results": len(results),
+        "num_distinct_units": len(ranking),
+        "num_duplicate_chunks": sum(1 for entry in retrieved if entry["duplicate"]),
         "num_invalid_metadata": sum(1 for key in keys if key is None),
         "retrieved_pages": [entry["page"] for entry in retrieved],
-        "relevant_pages_retrieved": [key[1] for key in dict.fromkeys(k for k in keys if k in relevant_keys)],
+        "ranked_pages": [key[1] if key is not None else None for key in ranking],
+        "relevant_pages_retrieved": [key[1] for key in ranking if key is not None and key in relevant_keys],
         "first_relevant_rank": rank,
         "reciprocal_rank": _round(reciprocal_rank(keys, relevant_keys)),
         "metrics": metrics,
@@ -291,13 +306,17 @@ def evaluate_results(
             for category in categories
         },
         "questions_with_no_relevant_result": [r["id"] for r in question_results if r["first_relevant_rank"] is None],
-        "questions_with_fewer_than_max_k_results": [r["id"] for r in question_results if r["num_results"] < max_k],
+        "questions_with_fewer_than_max_k_units": [
+            r["id"] for r in question_results if r["num_distinct_units"] < max_k
+        ],
+        "num_duplicate_chunks": sum(r["num_duplicate_chunks"] for r in question_results),
         "num_results_with_invalid_metadata": sum(r["num_invalid_metadata"] for r in question_results),
         "notes": (
             "Metrics cover answerable questions only; unanswerable questions are excluded "
             "and these numbers say nothing about abstention. recall = fact-level recall; "
-            "page_recall = share of expected_pages retrieved; precision = distinct relevant "
-            "pages / min(K, results returned); relevance is page-level."
+            "page_recall = share of expected_pages retrieved; precision = relevant pages in "
+            "top K / min(K, distinct pages returned). K counts distinct (source, page) units "
+            "in first-occurrence order, not raw chunks; relevance is page-level."
         ),
     }
     return {"summary": summary, "questions": question_results}
