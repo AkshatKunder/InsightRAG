@@ -103,6 +103,33 @@ def extract_sql(text: str) -> str | None:
     return "\n".join(lines).strip() or None
 
 
+_ENTITY_QUESTION_RE = re.compile(r"\b(which|who|list|name|top)\b", re.I)
+
+
+def entity_name_hints(question: str, schema: Schema) -> list[str]:
+    """Ask for names when the question asks *which* entities and the schema has a verified name column.
+
+    Schema-driven, not a global rule: only tables with a verified primary key and a
+    unique, complete name/title/label column qualify, and only when the question
+    asks which/who/list/top about that table's entity ("customers" for a table
+    ``..._customers``).
+    """
+
+    if not _ENTITY_QUESTION_RE.search(question):
+        return []
+    tokens = {t[:-1] if t.endswith("s") else t for t in re.findall(r"[a-z]+", question.lower())}
+    notes = []
+    for table in schema.tables:
+        entity = table.name.split("_")[-1]
+        entity = entity[:-1] if entity.endswith("s") else entity
+        name_col = next((c for c in table.columns if c.type == "TEXT" and re.search(r"name|title|label", c.name)
+                         and c.missing == 0 and c.distinct == table.row_count and c.name != table.primary_key), None)
+        if table.primary_key and name_col and entity in tokens:
+            notes.append(f"The question asks for {entity}s: return {table.name}.{name_col.name} (join through a VERIFIED "
+                         f"JOIN on {table.primary_key} if needed), not only the ID.")
+    return notes
+
+
 def lint(sql: str, schema: Schema) -> str | None:
     """Schema-aware checks for valid-but-wrong SQL (reported back to the model for a repair).
 
@@ -118,16 +145,47 @@ def lint(sql: str, schema: Schema) -> str | None:
     return None
 
 
+def rewrite_year_strftime(sql: str, schema: Schema) -> tuple[str, list[str]] | None:
+    """``strftime('%Y', year)`` on an integer *year* column is the column itself (Phase 4.2).
+
+    The lint rejects date functions on numeric columns. When every attempt was rejected for that reason
+    alone, this narrow deterministic rewrite is tried: only the ``'%Y'`` format, and only for INTEGER
+    columns whose values are all years (1900-2100). The rewritten query is validated again like any
+    generated query. Returns ``(sql, rewritten_columns)`` or ``None``.
+    """
+
+    years = {c.name.lower() for t in schema.tables for c in t.columns
+             if c.type == "INTEGER" and c.min is not None and 1900 <= c.min <= c.max <= 2100}
+    done = []
+
+    def repl(match):
+        column = match.group(1).split(".")[-1].strip('"').lower()
+        if column not in years:
+            return match.group(0)
+        done.append(column)
+        return match.group(1)
+
+    rewritten = re.sub(r"\bstrftime\s*\(\s*'%Y'\s*,\s*([A-Za-z_][\w.\"]*)\s*\)", repl, sql, flags=re.I)
+    return (rewritten, done) if done else None
+
+
 def generate_sql(
     question: str,
     schema: Schema,
     db_path: Path | str,
     complete: Callable[[str], str],
     max_repairs: int = 2,
+    extra_notes: list[str] | None = None,
+    entity_hints: bool = True,
 ) -> SQLGeneration:
-    """Generate and validate SQL. ``complete(prompt) -> text`` is the LLM call (injected)."""
+    """Generate and validate SQL. ``complete(prompt) -> text`` is the LLM call (injected).
 
-    notes = periods.hints(question)
+    ``extra_notes`` are added to the period hints, e.g. when a previous result missed a requested year.
+    ``entity_hints`` adds the schema-driven "return the name column" note (see ``entity_name_hints``).
+    """
+
+    names = entity_name_hints(question, schema) if entity_hints else []
+    notes = periods.hints(question) + names + list(extra_notes or [])
     asked = question.strip() + ("\nNOTES:\n- " + "\n- ".join(notes) if notes else "")
     prompt = PROMPT.format(schema=describe(schema), question=asked, no_sql=NO_SQL)
     result = SQLGeneration(question, None)
@@ -157,4 +215,21 @@ def generate_sql(
         record["error"] = error
         result.error = error
         current = REPAIR.format(prompt=prompt, previous=sql or raw, error=error, no_sql=NO_SQL)
+    # Every attempt was rejected: try the deterministic year-strftime rewrite on each attempt, in order.
+    for record in list(result.attempts):
+        if not record.get("sql") or "numeric column" not in (record.get("error") or ""):
+            continue
+        rewrite = rewrite_year_strftime(record["sql"], schema)
+        if not rewrite:
+            continue
+        try:
+            validated = sql_safety.validate(rewrite[0], db_path)
+            if lint(validated, schema) or periods.quarter_filter_issue(question, validated):
+                continue
+        except sql_safety.UnsafeSQL:
+            continue
+        result.attempts.append({"attempt": "rewrite", "from_attempt": record["attempt"], "sql": validated, "valid": True,
+                                "rewrite": f"strftime('%Y', col) -> col for {', '.join(rewrite[1])}"})
+        result.sql, result.error = validated, None
+        return result
     return result

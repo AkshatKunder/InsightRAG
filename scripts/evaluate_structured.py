@@ -38,6 +38,8 @@ from app.evaluation.answer_checks import check_fact, parse_quantities, values_ma
 from app.evaluation.reporting import fmt, md_table, write_text  # noqa: E402
 from app.evaluation.structured_eval import db_fingerprint, derived_correct, rate, result_match  # noqa: E402
 from app.structured import sql_safety  # noqa: E402
+from app.structured.scope import DERIVED_NAME_RE  # noqa: E402
+from app.structured.shares import FRACTION_NAME_RE  # noqa: E402
 from app.structured.engine import ABSTENTION, Assistant, StructuredQA, document_vocabulary  # noqa: E402
 from app.structured.ingestion import ingest_file  # noqa: E402
 from app.structured.router import classify  # noqa: E402
@@ -89,7 +91,10 @@ def evaluate_question(q: dict, sql_result: dict | None, rag_result: dict | None,
         rec.update(sql=sql_result.get("sql"), error=sql_result.get("error"), answer=sql_result.get("answer"),
                    columns=sql_result.get("columns"), rows=sql_result.get("rows")[:50] if sql_result.get("rows") else [],
                    attempts=len(attempts), repaired=len(attempts) > 1 and sql_result.get("sql") is not None,
-                   chart=(sql_result.get("chart") or {}).get("type"), incomplete=sql_result.get("incomplete"))
+                   chart=(sql_result.get("chart") or {}).get("type"), incomplete=sql_result.get("incomplete"),
+                   abstained=bool(sql_result.get("abstained")), scope=sql_result.get("scope"),
+                   share_validation=sql_result.get("share_validation"), ratio_validation=sql_result.get("ratio_validation"),
+                   presentation=sql_result.get("presentation"), rejected_result=sql_result.get("rejected_result"))
     expected = q.get("expected")
     if expected == "refused":
         rec["refused"] = sql_result is not None and sql_result.get("sql") is None and bool(sql_result.get("error"))
@@ -122,9 +127,21 @@ def evaluate_question(q: dict, sql_result: dict | None, rag_result: dict | None,
         rec["combined_answer"] = answer
         rec["sub_questions"] = (combined or {}).get("sub_questions")
         rec["correct"] = rec["hybrid_correct"]
-    elif q.get("expected_derived"):
-        # Shares/changes are judged on the computed figures: the rows may legitimately differ in shape.
-        rec["correct"] = bool(rec.get("derived_correct"))
+    elif q.get("expected_derived") == "period_change":
+        # Phase 4.2 (strict): the expected change must be computed AND the presented rows must be the
+        # requested scope (same rows as the gold result) with no model-computed change columns. Finding the
+        # right figure somewhere in an otherwise wrong result is not counted as correct.
+        rec["model_derived_columns_presented"] = [c for c in (rec.get("columns") or []) if DERIVED_NAME_RE.search(c)]
+        rec["correct_lenient"] = bool(rec.get("derived_correct"))
+        rec["correct"] = (bool(rec.get("derived_correct")) and rec["result_match"]
+                          and not rec["model_derived_columns_presented"])
+    elif q.get("expected_derived") == "shares":
+        # Phase 4.3 (strict): the shares must be right AND the presented rows must be the raw values of the
+        # requested scope (same rows as the gold result) with no model-computed share/ratio columns.
+        rec["model_fraction_columns_presented"] = [c for c in (rec.get("columns") or []) if FRACTION_NAME_RE.search(c)]
+        rec["correct_lenient"] = bool(rec.get("derived_correct"))
+        rec["correct"] = (bool(rec.get("derived_correct")) and rec["result_match"]
+                          and not rec["model_fraction_columns_presented"])
     else:
         rec["correct"] = rec["result_match"]
     return rec
@@ -161,6 +178,10 @@ def summarise(records: list[dict], routing: list[dict]) -> dict:
         "hybrid_attribution": rate([r.get("attribution") for r in hybrid]),
         "by_category": {k: {"n": len(v), "correct": rate([r["correct"] for r in v])} for k, v in sorted(by.items())},
         "overall_correct": rate([r["correct"] for r in records]),
+        # Phase 4.1 grading of period changes (derived figure only), for comparison with earlier results.
+        "overall_correct_lenient": rate([r.get("correct_lenient", r["correct"]) for r in records]),
+        "period_change_scope_correct": rate([r["correct"] for r in records if "model_derived_columns_presented" in r]),
+        "share_raw_values_correct": rate([r["correct"] for r in records if "model_fraction_columns_presented" in r]),
     }
 
 
@@ -190,6 +211,9 @@ def render(data: dict) -> str:
         ("Hybrid: document fact correct", "hybrid_document_fact"),
         ("Hybrid: document page cited", "hybrid_document_page_cited"),
         ("Overall correct (structured benchmark)", "overall_correct"),
+        ("Overall correct, figure-only grading (period change and shares judged on the figures only)", "overall_correct_lenient"),
+        ("Period change: figure AND scoped rows AND no model-computed columns", "period_change_scope_correct"),
+        ("Shares: figures AND raw-value rows AND no model-computed share columns", "share_raw_values_correct"),
     ]]
     routing_rows = [[k, v["n"], fmt(v["accuracy"])] for k, v in first["summary"]["routing_by_expected_route"].items()]
     misrouted = [r for r in first["routing"] if r["predicted"] != r["expected"]]
@@ -247,6 +271,8 @@ def main(argv=None) -> int:
     parser.add_argument("--no-rag", action="store_true", help="Skip the document pipeline for hybrid questions")
     parser.add_argument("--findings", type=Path, default=EVAL / "phase4_findings.md")
     parser.add_argument("--from-results", type=Path, help="Re-render the report from a saved structured_eval.json")
+    parser.add_argument("--output-dir", type=Path, default=OUT, help="Where the JSON results are written")
+    parser.add_argument("--report", type=Path, default=EVAL / "phase4_evaluation_report.md")
     args = parser.parse_args(argv)
     os.chdir(PROJECT_ROOT)
     findings = args.findings.read_text(encoding="utf-8").split("\n", 2)[-1].strip() if args.findings.is_file() else ""
@@ -254,7 +280,7 @@ def main(argv=None) -> int:
     if args.from_results:
         data = json.loads(args.from_results.read_text(encoding="utf-8"))
         data["findings"] = findings
-        write_text(EVAL / "phase4_evaluation_report.md", render(data))
+        write_text(args.report, render(data))
         print("Report re-rendered.")
         return 0
 
@@ -305,13 +331,13 @@ def main(argv=None) -> int:
     data = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"), "benchmark": args.benchmark.name,
             "questions": len(benchmark["questions"]), "llm": MODEL_NAME, "generation_options": options,
             "tables": tables, "runs": runs}
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "structured_eval.json").write_text(json.dumps(data, indent=2, default=str) + "\n", encoding="utf-8")
-    (OUT / "structured_eval_summary.json").write_text(json.dumps(
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    (args.output_dir / "structured_eval.json").write_text(json.dumps(data, indent=2, default=str) + "\n", encoding="utf-8")
+    (args.output_dir / "structured_eval_summary.json").write_text(json.dumps(
         {k: data[k] for k in ("generated", "benchmark", "llm", "generation_options", "tables")}
         | {"runs": [{"run": r["run"], "summary": r["summary"]} for r in runs]}, indent=2, default=str) + "\n", encoding="utf-8")
     data["findings"] = findings
-    write_text(EVAL / "phase4_evaluation_report.md", render(data))
+    write_text(args.report, render(data))
     for r in runs:
         print(f"run {r['run']}: " + json.dumps({k: v for k, v in r["summary"].items() if not isinstance(v, dict)}))
     return 0

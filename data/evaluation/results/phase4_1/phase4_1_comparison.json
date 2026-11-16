@@ -1,0 +1,506 @@
+{
+  "generated": "2026-11-16T08:54:39+00:00",
+  "metrics": {
+    "routing_accuracy": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "sql_generation_valid": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "execution_success": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "execution_accuracy": {
+      "phase4": 0.8261,
+      "phase4_1": 0.913
+    },
+    "execution_accuracy_sql_only": {
+      "phase4": 0.8,
+      "phase4_1": 0.9
+    },
+    "derived_accuracy": {
+      "phase4": 0.5,
+      "phase4_1": 1.0
+    },
+    "chart_accuracy": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "unanswerable_abstention": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "safety_refused_and_db_unchanged": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "hybrid_correct": {
+      "phase4": 1.0,
+      "phase4_1": 1.0
+    },
+    "hybrid_document_page_cited": {
+      "phase4": 0.6667,
+      "phase4_1": 1.0
+    },
+    "overall_correct": {
+      "phase4": 0.8929,
+      "phase4_1": 1.0
+    }
+  },
+  "changes": [
+    {
+      "id": "S01",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S02",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S03",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S04",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S05",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S06",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S07",
+      "phase4": [
+        false,
+        false
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "improved"
+    },
+    {
+      "id": "S08",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S09",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S10",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S11",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S12",
+      "phase4": [
+        false,
+        false
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "improved"
+    },
+    {
+      "id": "S13",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S14",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S15",
+      "phase4": [
+        false,
+        false
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "improved"
+    },
+    {
+      "id": "S16",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S17",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S18",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S19",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "S20",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "U01",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "U02",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "X01",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "X02",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "X03",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "H01",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "H02",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    },
+    {
+      "id": "H03",
+      "phase4": [
+        true,
+        true
+      ],
+      "phase4_1": [
+        true,
+        true
+      ],
+      "status": "unchanged"
+    }
+  ],
+  "routing_errors_phase4_1": [],
+  "details": [
+    {
+      "id": "S07",
+      "correct": true,
+      "sql": "SELECT customer_id, SUM(revenue_usd) AS total_revenue FROM steel_orders_sample_orders GROUP BY customer_id ORDER BY SUM(revenue_usd) DESC LIMIT 3",
+      "rows": [
+        [
+          "C006",
+          "Sertao Machinery",
+          11482400
+        ],
+        [
+          "C004",
+          "Redcliff Motors",
+          11449400
+        ],
+        [
+          "C002",
+          "Bluepeak Construction",
+          10220400
+        ]
+      ],
+      "answer": "The query returned 3 rows:\n- customer id C006; customer name Sertao Machinery; total revenue 11,482,400\n- customer id C004; customer name Redcliff Motors; total revenue 11,449,400\n- customer id C002; customer name Bluepeak Construction; total revenue 10,220,400",
+      "pages": null,
+      "incomplete": null
+    },
+    {
+      "id": "S12",
+      "correct": true,
+      "sql": "SELECT SUM(revenue_usd) AS total_order_revenue FROM steel_orders_sample_orders WHERE order_date BETWEEN '2025-01-01' AND '2025-03-31'",
+      "rows": [
+        [
+          8844650
+        ]
+      ],
+      "answer": "Result: total order revenue: 8,844,650.",
+      "pages": null,
+      "incomplete": null
+    },
+    {
+      "id": "S15",
+      "correct": true,
+      "sql": "SELECT segment, year, sales_usd_m, operating_income_usd_m, employees_fte, SUM(CASE WHEN year = 2024 THEN sales_usd_m ELSE 0 END) AS sales_change, SUM(CASE WHEN year = 2024 THEN operating_income_usd_m ELSE 0 END) AS operating_income_change, SUM(CASE WHEN year = 2024 THEN employees_fte ELSE 0 END) AS employees_change FROM segment_kpis WHERE year = 2024 OR year = 2025 GROUP BY segment, year",
+      "rows": [
+        [
+          "Brazil",
+          2024,
+          12401,
+          1399,
+          22624,
+          12401,
+          1399,
+          22624
+        ],
+        [
+          "Brazil",
+          2025,
+          11172,
+          608,
+          25014,
+          0,
+          0,
+          0
+        ],
+        [
+          "Europe",
+          2024,
+          29952,
+          386,
+          48544,
+          29952,
+          386,
+          48544
+        ],
+        [
+          "Europe",
+          2025,
+          28793,
+          522,
+          43878,
+          0,
+          0,
+          0
+        ]
+      ],
+      "answer": "The query returned 10 rows:\n- segment Brazil; year 2,024; sales usd m 12,401; operating income usd m 1,399; employees fte 22,624; sales change 12,401; operating income change 1,399; employees change 22,624\n- segment Brazil; year 2,025; sales usd m 11,172; operating income usd m 608; employees fte 25,014; sales change 0; operating income change 0; employees change 0\n- segment Europe; year 2,024; sales usd m 29,952; operating income usd m 386; employees fte 48,544; sales change 29,952; operating income change 386; employees change 48,544\n- segment Europe; year 2,025; sales usd m 28,793; operating income usd m 522; employees fte 43,878; sales change 0; operating income change 0; employees change 0\n- segment Mining; year 2,024; sales usd m 2,663; operating income usd m 770; employees fte 4,758; sales change 2,663; operating income change 770; employees change 4,758\n- segment Mining; year 2,025; sales usd m 3,232; operating income usd m 789; employees fte 5,918; sales change 0; operating income change 0; employees change 0\n- segment North America; year 2,024; sales usd m 11,896; operating income usd m 1,310; employees fte 13,861; sales change 11,896; operating income change 1,310; employees change 13,861\n- segment North America; year 2,025; sales usd m 12,335; operating income usd m 2,205; employees fte 16,083; sales change 0; operating income change 0; employees change 0\n- segment Sustainable Solutions; year 2,024; sales usd m 10,722; operating income usd m 57; employees fte 12,843; sales change 10,722; operating income change 57; employees change 12,843\n- segment Sustainable Solutions; year 2,025; sales usd m 10,501; operating income usd m 142; employees fte 13,149; sales change 0; operating income change 0; employees change 0\nBrazil: sales usd m changed from 12,401 (2024) to 11,172 (2025), -1,229 (-9.91%).\nBrazil: operating income usd m changed from 1,399 (2024) to 608 (2025), -791 (-56.54%).\nBrazil: employees fte changed from 22,624 (2024) to 25,014 (2025), +2,390 (+10.56%).\nBrazil: sales change changed from 12,401 (2024) to 0 (2025), -12,401 (-100.00%).\nBrazil: operating income change changed from 1,399 (2024) to 0 (2025), -1,399 (-100.00%).\nBrazil: employees change changed from 22,624 (2024) to 0 (2025), -22,624 (-100.00%).\nEurope: sales usd m changed from 29,952 (2024) to 28,793 (2025), -1,159 (-3.87%).\nEurope: operating income usd m changed from 386 (2024) to 522 (2025), +136 (+35.23%).\nEurope: employees fte changed from 48,544 (2024) to 43,878 (2025), -4,666 (-9.61%).\nEurope: sales change changed from 29,952 (2024) to 0 (2025), -29,952 (-100.00%).",
+      "pages": null,
+      "incomplete": null
+    },
+    {
+      "id": "H01",
+      "correct": true,
+      "sql": "SELECT SUM(sales_usd_m) AS sales FROM segment_kpis WHERE segment = 'Europe' AND year = 2025",
+      "rows": [
+        [
+          28793
+        ]
+      ],
+      "answer": "From the structured data (segment_kpis):\nResult: sales: 28,793.\n\nFrom the document (pages 172, 95):\nThe Europe sales figure in the annual report for 2025 is $28,793 million.",
+      "pages": [
+        172,
+        95
+      ],
+      "incomplete": null
+    }
+  ],
+  "runs": {
+    "phase4": 2,
+    "phase4_1": 2
+  },
+  "generation_options": {
+    "temperature": 0.0,
+    "seed": 42
+  }
+}

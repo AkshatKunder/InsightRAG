@@ -25,7 +25,10 @@ MAX_BAR_CATEGORIES = 30
 MAX_PIE_SLICES = 8
 
 
-def choose_chart(question: str, sql: str, columns: Sequence[str], rows: Sequence[Sequence]) -> dict:
+def choose_chart(question: str, sql: str, columns: Sequence[str], rows: Sequence[Sequence],
+                 parts_of_whole: bool = False) -> dict:
+    """``parts_of_whole``: the rows were validated as the complete raw parts of a total (Phase 4.3 shares)."""
+
     if len(rows) < 2:
         return {"type": None, "reason": "A single row is shown as a value, not a chart."}
     roles = column_roles(columns, rows)
@@ -49,7 +52,7 @@ def choose_chart(question: str, sql: str, columns: Sequence[str], rows: Sequence
         if categories != len(rows):
             return {"type": None, "reason": "Category labels repeat; the rows are not one series per category."}
         data = [{columns[x]: r[x], **{columns[i]: r[i] for i in numeric}} for r in rows]
-        additive = bool(re.search(r"\b(sum|count)\s*\(", sql or "", re.I))
+        additive = parts_of_whole or bool(re.search(r"\b(sum|count)\s*\(", sql or "", re.I))
         if (SHARE_INTENT_RE.search(question) and len(numeric) == 1 and additive
                 and 2 <= categories <= MAX_PIE_SLICES and all(r[numeric[0]] is not None and r[numeric[0]] >= 0 for r in rows)
                 and sum(r[numeric[0]] for r in rows) > 0):

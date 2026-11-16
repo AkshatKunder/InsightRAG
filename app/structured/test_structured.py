@@ -322,9 +322,14 @@ def test_failed_query_never_produces_numbers(db):
 
 
 def test_change_question_missing_a_period_is_flagged(db):
-    qa = StructuredQA(db, complete=lambda p: "SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' AND year = 2025")
+    prompts = []
+    qa = StructuredQA(db, complete=lambda p: prompts.append(p) or
+                      "SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' AND year = 2025")
     out = qa.ask("How did Europe sales change between 2024 and 2025 in the segment kpi table?")
-    assert out["incomplete"] == {"missing_periods": ["2024"]} and "cannot be calculated" in out["answer"]
+    assert out["incomplete"] == {"missing_periods": ["2024"]} and out["abstained"]
+    assert "cannot calculate" in out["answer"] and "28,793" not in out["answer"]  # no single-period figure as an answer
+    assert out["analytics"] == {} and len(prompts) == 2  # first attempt + one retry
+    assert "returned no rows for 2024" in prompts[1]
     full = StructuredQA(db, complete=lambda p: "SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' ORDER BY year")
     result = full.ask("How did Europe sales change between 2024 and 2025 in the segment kpi table?")
     assert "-3.87%" in result["answer"] and "incomplete" not in result
@@ -381,3 +386,441 @@ def test_assistant_hybrid_sends_parts_to_each_side(db):
                                         "operating income in 2025 according to the annual report?")
     assert out["sub_questions"]["split"] and "annual report" in asked["doc"] and "segment kpi table" not in asked["doc"]
     assert "QUESTION: What was Mining's sales in 2025 in the segment kpi table?" in asked["sql_prompt"]
+
+
+# ---------------------------------------------------------------- Phase 4.1
+
+
+def test_quarter_ranges_leap_years_and_q4():
+    from app.structured.periods import quarter_range, quarters
+
+    assert quarter_range(2025, 1) == ("2025-01-01", "2025-03-31")
+    assert quarter_range(2024, 1) == ("2024-01-01", "2024-03-31")  # leap year: Q1 still ends 31 March
+    assert quarter_range(2024, 4) == ("2024-10-01", "2024-12-31")  # never crosses the year boundary
+    assert quarter_range(2023, 2) == ("2023-04-01", "2023-06-30")
+    found = quarters("Revenue in the first quarter of 2025 vs Q4 2024 and 2023 Q3 and the 2nd quarter 2026")
+    assert [q["label"] for q in found] == ["Q1 2025", "Q2 2026", "Q4 2024", "Q3 2023"]
+    assert quarters("revenue in 2025") == []
+    with pytest.raises(ValueError):
+        quarter_range(2025, 5)
+
+
+def test_quarter_filter_must_use_explicit_range(db):
+    from app.structured.periods import quarter_filter_issue
+
+    q = "Total amount in the first quarter of 2025 in the orders table?"
+    assert quarter_filter_issue(q, "SELECT SUM(amount) FROM orders WHERE strftime('%Y-%m', order_date) = '2025-03'")
+    assert quarter_filter_issue(q, "SELECT SUM(amount) FROM orders WHERE order_date BETWEEN '2025-01-01' AND '2025-03-31'") is None
+    answers = iter(["SELECT SUM(amount) FROM orders WHERE strftime('%Y-%m', order_date) = '2025-03'",
+                    "SELECT SUM(amount) FROM orders WHERE order_date BETWEEN '2025-01-01' AND '2025-03-31'"])
+    prompts = []
+    gen = nl2sql.generate_sql(q, discover(db), db, lambda p: prompts.append(p) or next(answers))
+    assert "BETWEEN '2025-01-01' AND '2025-03-31'" in gen.sql and "Q1 2025 means dates from 2025-01-01" in prompts[0]
+
+
+def test_missing_year_detection_ignores_non_year_numbers():
+    from app.structured.periods import missing_years, requested_years
+
+    q = "How did sales change between 2024 and 2025?"
+    assert requested_years(q) == ["2024", "2025"] and requested_years("Sales in 2024 and 2025") == []
+    assert missing_years(q, ["segment", "sales"], [["A", 20245], ["B", 2024.0]]) == ["2024", "2025"]  # 20245 is not a year
+    assert missing_years(q, ["period", "v"], [["2024-03", 1], [2025, 2]]) == []
+    assert missing_years(q, ["sales_2024", "sales_2025"], [[1, 2]]) == []
+
+
+def test_missing_year_retry_succeeds_and_computes_from_both_periods(db):
+    answers = iter(["SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' AND year = 2025",
+                    "SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' ORDER BY year"])
+    out = StructuredQA(db, complete=lambda p: next(answers)).ask(
+        "How did Europe sales change between 2024 and 2025 in the segment kpi table?")
+    assert "incomplete" not in out and "-3.87%" in out["answer"]
+    assert out["generation"]["retry_for_missing_periods"]["missing"] == ["2024"]
+
+
+def test_name_resolution_preserves_ranking_and_top_n(db):
+    sql = "SELECT customer_id, SUM(amount) AS total FROM orders GROUP BY customer_id ORDER BY total DESC LIMIT 2"
+    out = StructuredQA(db, complete=lambda p: sql).ask("Which customers have the highest total amount in the orders table?")
+    assert out["columns"] == ["customer_id", "name", "total"]
+    assert out["rows"] == [["C1", "Alpha Works", 350.5], ["C2", "Beta Mills", 80.0]]
+    assert out["resolved_names"] == [{"column": "customer_id", "table": "customers", "key": "customer_id", "name_column": "name"}]
+    assert {s["table"] for s in out["sources"]} == {"orders", "customers"}
+
+
+def test_name_resolution_only_when_entity_asked_and_names_missing(db):
+    sql = "SELECT customer_id, SUM(amount) AS total FROM orders GROUP BY customer_id"
+    out = StructuredQA(db, complete=lambda p: sql).ask("Total amount per id in the orders table?")
+    assert out["resolved_names"] == [] and out["columns"] == ["customer_id", "total"]
+    named = "SELECT c.name, SUM(o.amount) AS total FROM orders o JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.name"
+    assert StructuredQA(db, complete=lambda p: named).ask("Total amount per customer in the orders table?")["resolved_names"] == []
+
+
+def test_entity_name_hint_is_schema_driven(db):
+    schema = discover(db)
+    hint = nl2sql.entity_name_hints("Which customers ordered the most in the orders table?", schema)
+    assert hint == ["The question asks for customers: return customers.name (join through a VERIFIED JOIN on customer_id "
+                    "if needed), not only the ID."]
+    # No hint for entities without a verified name column, or for non-"which" questions.
+    assert nl2sql.entity_name_hints("Which sales representative handled most orders?", schema) == []
+    assert nl2sql.entity_name_hints("How many customers are there?", schema) == []
+    assert "name column" not in nl2sql.PROMPT  # the global prompt is unchanged from Phase 4
+
+
+def test_citation_fallback_normalises_leading_article_only():
+    from app.structured.engine import ground_citations
+
+    table = {"source": "r.pdf", "page": 95, "text": "(in $ millions) Sales for the year ended December 31, Segment 2025 2024 "
+                                                    "Europe 28,793 29,952 Total 61,352 62,441"}
+    claim = "The Europe sales figure in the annual report for 2025 is $28,793 million."
+    rag = {"answer": claim, "citations": [], "context": [table],
+           "validation": {"overall_status": "UNSUPPORTED", "claims": [{"claim_text": claim, "status": "UNSUPPORTED"}]}}
+    grounded = ground_citations("What is the Europe sales figure in the annual report in 2025?", rag)
+    assert [c["page"] for c in grounded["citations"]] == [95] and grounded["validation"]["overall_status"] == "SUPPORTED"
+    # A figure that is not in any context chunk is never given a citation.
+    absent = "The Europe sales figure for 2025 is $31,000 million."
+    wrong = {**rag, "answer": absent,
+             "validation": {"overall_status": "UNSUPPORTED", "claims": [{"claim_text": absent, "status": "UNSUPPORTED"}]}}
+    assert ground_citations("What is the Europe sales figure in 2025?", wrong) is wrong
+
+
+def test_hybrid_citation_fallback_adds_supporting_context_and_revalidates():
+    from app.structured.engine import ground_citations
+
+    table = {"source": "r.pdf", "page": 95, "text": "(in $ millions) Sales for the year ended December 31, Segment 2025 2024 "
+                                                    "Europe 28,793 29,952 Total 61,352 62,441"}
+    other = {"source": "r.pdf", "page": 172, "text": "Consolidated statements of operations. Cost of sales 56,976."}
+    rag = {"answer": "Europe's sales in 2025 were $28,793 million.", "citations": [other], "context": [table, other],
+           "validation": {"overall_status": "UNSUPPORTED", "claims": [
+               {"claim_text": "Europe's sales in 2025 were $28,793 million.", "status": "UNSUPPORTED"}]}}
+    grounded = ground_citations("What were Europe's sales in 2025 in the annual report?", rag)
+    assert [c["page"] for c in grounded["citations"]] == [172, 95]
+    assert grounded["validation"]["overall_status"] == "SUPPORTED"
+    assert grounded["citation_fallback"] == {"added_pages": [95], "status_before": "UNSUPPORTED", "status_after": "SUPPORTED",
+                                             "leading_articles_normalised": True}
+
+
+def test_hybrid_citation_fallback_never_adds_unsupporting_chunks():
+    from app.structured.engine import ground_citations
+
+    other = {"source": "r.pdf", "page": 172, "text": "Cost of sales 56,976."}
+    rag = {"answer": "Europe's sales in 2025 were $99,999 million.", "citations": [], "context": [other],
+           "validation": {"overall_status": "UNSUPPORTED", "claims": [{"claim_text": "Europe's sales in 2025 were $99,999 million.",
+                                                                       "status": "UNSUPPORTED"}]}}
+    assert ground_citations("q", rag) is rag  # unchanged: no chunk supports the figure
+    supported = {**rag, "validation": {"overall_status": "SUPPORTED", "claims": []}}
+    assert ground_citations("q", supported) is supported
+
+
+def test_name_hint_failure_falls_back_to_plain_prompt_and_resolves_names(db):
+    prompts = []
+
+    def fake(prompt):
+        prompts.append(prompt)
+        if "The question asks for customers" in prompt:
+            return "SELECT name, SUM(amount) FROM orders GROUP BY name"  # invalid: name is in customers
+        return "SELECT customer_id, SUM(amount) AS total FROM orders GROUP BY customer_id ORDER BY total DESC LIMIT 1"
+
+    out = StructuredQA(db, complete=fake).ask("Which customer has the highest total amount in the orders table?")
+    assert out["rows"] == [["C1", "Alpha Works", 350.5]] and out["error"] is None
+    assert "without_name_hint" in out["generation"] and len(prompts) == 4  # 3 hinted attempts + 1 plain
+
+
+def test_years_are_not_formatted_with_thousands_separators():
+    result = sql_safety.QueryResult("x", columns=["year", "sales_usd_m"], rows=[(2024, 29952), (2025, 28793)])
+    text = render_answer(result, {})
+    assert "year 2024; sales usd m 29,952" in text and "2,024" not in text
+
+
+# ---------------------------------------------------------------- Phase 4.2: multi-period result scope
+
+from app.structured import scope  # noqa: E402
+
+CHANGE_Q = "How did Europe sales change between 2024 and 2025 in the segment kpi table?"
+SCOPED_SQL = "SELECT year, sales_usd_m FROM segment_kpis WHERE segment = 'Europe' ORDER BY year"
+UNFILTERED_SQL = "SELECT segment, year, sales_usd_m FROM segment_kpis GROUP BY segment, year"
+
+
+def test_requested_filters_come_from_the_data_of_the_queried_tables(db):
+    schema = discover(db)
+    found = scope.requested_filters(CHANGE_Q, UNFILTERED_SQL, schema, db)
+    assert found == [{"value": "Europe", "columns": [("segment_kpis", "segment")]}]
+    # customers.region also contains 'Europe', but only tables the query reads are considered
+    assert scope.requested_filters("How did sales change between 2024 and 2025?", UNFILTERED_SQL, schema, db) == []
+    assert scope.requested_filters("Europe and Mining sales between 2024 and 2025", UNFILTERED_SQL, schema, db)[1]["value"] == "Mining"
+
+
+def test_scope_issues_for_missing_filter_extra_categories_and_case_when():
+    europe = [{"value": "Europe", "columns": [("segment_kpis", "segment")]}]
+    assert scope.scope_issues(SCOPED_SQL, ["year", "sales"], [[2024, 1], [2025, 2]], europe, ["2024", "2025"]) == []
+    # filter column returned: every row must carry the requested value
+    issues = scope.scope_issues(UNFILTERED_SQL, ["segment", "year", "sales"],
+                                [["Europe", 2024, 1], ["Mining", 2024, 2]], europe, ["2024", "2025"])
+    assert issues and "Mining" in issues[0]
+    # filter column not returned and no WHERE predicate
+    assert "does not filter" in scope.scope_issues("SELECT year, SUM(sales_usd_m) FROM segment_kpis GROUP BY year",
+                                                   ["year", "s"], [[2024, 1], [2025, 2]], europe)[0]
+    # a CASE WHEN in the select list is not a filter
+    case_sql = "SELECT year, SUM(CASE WHEN segment = 'Europe' THEN sales_usd_m END) AS s FROM segment_kpis GROUP BY year"
+    assert scope.scope_issues(case_sql, ["year", "s"], [[2024, 1], [2025, 2]], europe)
+    # IN (...) and HAVING are filters; periods outside the requested range are reported
+    assert scope.scope_issues("SELECT year, sales_usd_m FROM segment_kpis WHERE segment IN ('Europe') AND year > 2000",
+                              ["year", "sales_usd_m"], [[2023, 0], [2024, 1]], europe, ["2024", "2025"]) == [
+        "the result contains periods outside 2024-2025 (2023)"]
+
+
+def test_model_derived_columns_are_detected_but_real_columns_are_kept(db):
+    schema = discover(db)
+    cols = ["segment", "year", "sales_usd_m", "sales_change", "growth_pct", "yoy_delta", "employees_fte"]
+    assert [cols[i] for i in scope.derived_columns(cols, schema)] == ["sales_change", "growth_pct", "yoy_delta"]
+    assert scope.relevant_metrics("How did sales change?", cols, [2, 6], schema) == [2]
+    assert scope.relevant_metrics("How did it change?", cols, [2, 6], schema) == [2, 6]  # nothing named: keep all
+
+
+def test_unfiltered_multi_period_query_is_retried_with_the_filter(db):
+    prompts = []
+    answers = iter([UNFILTERED_SQL, SCOPED_SQL])
+    out = StructuredQA(db, complete=lambda p: prompts.append(p) or next(answers)).ask(CHANGE_Q)
+    assert len(prompts) == 2 and "segment = 'Europe'" in prompts[1] and "WHERE clause" in prompts[1]
+    assert out["generation"]["retry_for_scope"]["scope_issues"] and out["scope"]["issues_final_query"] == []
+    assert not out.get("abstained") and out["rows"] == [[2024, 29952], [2025, 28793]]
+    assert "-1,159 (-3.87%)" in out["answer"] and "Mining" not in out["answer"]
+    assert "2024: sales usd m 29,952" in out["answer"] and "2025: sales usd m 28,793" in out["answer"]
+
+
+def test_refusal_when_the_filter_is_still_missing_after_one_retry(db):
+    prompts = []
+    out = StructuredQA(db, complete=lambda p: prompts.append(p) or UNFILTERED_SQL).ask(CHANGE_Q)
+    assert len(prompts) == 2 and out["abstained"] and "cannot calculate" in out["answer"]
+    assert out["rows"] == [] and out["analytics"] == {} and out["rejected_result"]["rows"]
+    assert not any(v in out["answer"] for v in ("29,952", "28,793", "-1,159", "3.87"))
+    # the hybrid assistant does not use an abstained structured result as evidence
+    assert not Assistant._sql_ok(out)
+
+
+def test_category_rows_in_a_grouped_result_are_still_out_of_scope(db):
+    # Europe's figures are present (and its change would be right), but the other segments make the
+    # result wrong for the question: it is rejected, not presented.
+    sql = "SELECT segment, year, sales_usd_m FROM segment_kpis WHERE year IN (2024, 2025) ORDER BY segment, year"
+    out = StructuredQA(db, complete=lambda p: sql).ask(CHANGE_Q)
+    assert out["abstained"] and "Mining" in out["answer"] and "-3.87" not in out["answer"]
+
+
+def test_misleading_model_change_columns_are_ignored_and_change_computed_in_python(db):
+    sql = ("SELECT year, sales_usd_m, employees_fte, SUM(CASE WHEN year = 2024 THEN sales_usd_m ELSE 0 END) AS sales_change "
+           "FROM segment_kpis WHERE segment = 'Europe' GROUP BY year ORDER BY year")
+    out = StructuredQA(db, complete=lambda p: sql).ask(CHANGE_Q)
+    assert out["columns"] == ["year", "sales_usd_m"] and out["rows"] == [[2024, 29952], [2025, 28793]]
+    assert out["presentation"] == {"model_derived_columns_ignored": ["sales_change"], "metrics_not_asked": ["employees_fte"]}
+    assert "sales_change" in out["raw_result"]["columns"]
+    changes = out["analytics"]["period_changes"]
+    assert [(c["metric"], c["absolute_change"], c["percent_change"]) for c in changes] == [("sales_usd_m", -1159, -3.87)]
+    assert "sales change" not in out["answer"] and "-100" not in out["answer"]
+
+
+def test_multiple_categories_and_periods_when_both_are_requested(db):
+    q = "How did Europe and Mining sales change between 2024 and 2025 in the segment kpi table?"
+    sql = "SELECT segment, year, sales_usd_m FROM segment_kpis WHERE segment IN ('Europe', 'Mining') ORDER BY segment, year"
+    out = StructuredQA(db, complete=lambda p: sql).ask(q)
+    assert not out.get("abstained") and len(out["rows"]) == 4
+    groups = {c["group"]: c["absolute_change"] for c in out["analytics"]["period_changes"]}
+    assert groups == {"Europe": -1159, "Mining": 569}
+    assert "Europe, sales usd m: 29,952 (2024) to 28,793 (2025)" in out["answer"]
+
+
+def test_scope_checks_do_not_apply_to_single_period_questions(db):
+    sql = "SELECT segment, sales_usd_m FROM segment_kpis WHERE year = 2025"
+    prompts = []
+    out = StructuredQA(db, complete=lambda p: prompts.append(p) or sql).ask("Europe sales in 2025 in the segment kpi table?")
+    assert len(prompts) == 1 and "scope" not in out and len(out["rows"]) == 2
+
+
+def test_filter_must_hold_in_every_top_level_or_branch():
+    europe = [{"value": "Europe", "columns": [("segment_kpis", "segment")]}]
+    rows, cols = [[2024, 1], [2025, 2]], ["year", "s"]
+    precedence_bug = "SELECT year, SUM(sales_usd_m) AS s FROM segment_kpis WHERE segment = 'Europe' AND year = 2024 OR year = 2025 GROUP BY year"
+    assert scope.scope_issues(precedence_bug, cols, rows, europe)
+    grouped = "SELECT year, SUM(sales_usd_m) AS s FROM segment_kpis WHERE segment = 'Europe' AND (year = 2024 OR year = 2025) GROUP BY year"
+    assert scope.scope_issues(grouped, cols, rows, europe) == []
+    both = ("SELECT year, SUM(sales_usd_m) AS s FROM segment_kpis WHERE (segment = 'Europe' AND year = 2024) "
+            "OR (segment = 'Europe' AND year = 2025) GROUP BY year")
+    assert scope.scope_issues(both, cols, rows, europe) == []
+
+
+def test_year_strftime_rewrite_only_after_all_attempts_fail_and_is_revalidated(db):
+    schema = discover(db)
+    bad = ("SELECT strftime('%Y', year) AS period, SUM(sales_usd_m) AS sales FROM segment_kpis "
+           "WHERE segment = 'Europe' AND year BETWEEN 2024 AND 2025 GROUP BY strftime('%Y', year)")
+    assert nl2sql.rewrite_year_strftime(bad, schema)[1] == ["year", "year"]
+    assert nl2sql.rewrite_year_strftime("SELECT strftime('%m', year) FROM segment_kpis", schema) is None  # only '%Y'
+    assert nl2sql.rewrite_year_strftime("SELECT strftime('%Y', sales_usd_m) FROM segment_kpis", schema) is None  # not years
+    gen = nl2sql.generate_sql(CHANGE_Q, schema, db, lambda p: bad)
+    assert [a["valid"] for a in gen.attempts] == [False, False, False, True] and gen.attempts[-1]["from_attempt"] == 1
+    assert "strftime" not in gen.sql and sql_safety.execute(gen.sql, db).rows == [(2024, 29952), (2025, 28793)]
+    # a valid attempt is used as generated (no rewrite)
+    ok = nl2sql.generate_sql(CHANGE_Q, schema, db, lambda p: SCOPED_SQL)
+    assert len(ok.attempts) == 1 and ok.sql == SCOPED_SQL
+
+
+def test_retry_with_or_precedence_bug_is_refused(db):
+    first = "SELECT segment, year, sales_usd_m FROM segment_kpis GROUP BY segment, year"
+    retry = ("SELECT year, SUM(sales_usd_m) AS sales FROM segment_kpis WHERE segment = 'Europe' AND year = 2024 "
+             "OR year = 2025 GROUP BY year")
+    answers = iter([first, retry])
+    out = StructuredQA(db, complete=lambda p: next(answers)).ask(CHANGE_Q)
+    assert out["abstained"] and out["rows"] == [] and "does not filter" in out["answer"]
+
+
+# ---------------------------------------------------------------- Phase 4.3: deterministic shares and ratios
+
+from app.structured import shares  # noqa: E402
+
+SHARE_Q = "What share of 2025 employees in the segment kpi table does each segment have?"
+RAW_2025 = "SELECT segment, employees_fte FROM segment_kpis WHERE year = 2025"
+FRACTION_ONLY = ("SELECT segment, 1.0 * SUM(employees_fte) / SUM(employees_fte) OVER () AS share FROM segment_kpis "
+                 "WHERE year = 2025 GROUP BY segment")
+
+
+@pytest.fixture
+def sales_db(db, tmp_path):
+    path = tmp_path / "regional_sales.csv"
+    path.write_text("Region,Product,Year,Revenue\nEurope,Coil,2025,60\nEurope,Plate,2025,40\nEurope,Coil,2024,10\n"
+                    "Asia,Coil,2025,500\nAsia,Plate,2025,0\n", encoding="utf-8")
+    ingest_file(path, db)
+    return db
+
+
+def test_share_and_ratio_intent_detection():
+    assert shares.intent(SHARE_Q) == "share"
+    assert shares.intent("What percentage of total revenue does each region contribute?") == "share"
+    assert shares.intent("How much does each segment contribute to employees?") == "share"
+    assert shares.intent("What is the ratio of operating income to sales for each segment?") == "ratio"
+    assert shares.ratio_terms("What is operating income as a percentage of sales in 2025?") == ("operating income", "sales")
+    assert shares.intent("Sales as a share of total sales by segment") == "share"  # 'of total' is a share, not a ratio
+    for q in ("What is the average revenue per order for each customer region?", "What is the total revenue per product?"):
+        assert shares.intent(q) is None
+
+
+def test_model_computed_fraction_columns_are_detected(db):
+    schema = discover(db)
+    assert shares.computed_fraction_columns(FRACTION_ONLY, ["segment", "share"], schema) == [1]
+    sql = ("SELECT segment, SUM(employees_fte) AS employees_fte, employees_fte * 100.0 / 50 AS x FROM segment_kpis "
+           "GROUP BY segment")
+    assert shares.computed_fraction_columns(sql, ["segment", "employees_fte", "x"], schema) == [2]
+    assert shares.computed_fraction_columns(RAW_2025, ["segment", "employees_fte"], schema) == []
+
+
+def test_percentage_of_total_from_raw_values_with_verified_denominator(db):
+    out = StructuredQA(db, complete=lambda p: RAW_2025).ask(
+        "What percentage of total 2025 employees does each segment have in the segment kpi table?")
+    got = {s["label"]: (s["numerator"], s["denominator"], s["share_percent"]) for s in out["analytics"]["shares"]}
+    assert got == {"Europe": (43878, 49796, 88.12), "Mining": (5918, 49796, 11.88)}
+    assert out["share_validation"]["denominator_verified"] is True
+    assert "43,878 / 49,796 = 88.12%" in out["answer"] and out["chart"]["type"] == "pie"
+    assert out["rows"] == [["Europe", 43878], ["Mining", 5918]]
+
+
+def test_fraction_only_result_is_retried_for_raw_values(db):
+    prompts, answers = [], iter([FRACTION_ONLY, RAW_2025])
+    out = StructuredQA(db, complete=lambda p: prompts.append(p) or next(answers)).ask(SHARE_Q)
+    assert len(prompts) == 2 and "raw value of employees_fte" in prompts[1] and "window functions" in prompts[1]
+    assert out["share_validation"]["ignored_columns_first_query"] == ["share"]
+    assert [s["share_percent"] for s in out["analytics"]["shares"]] == [88.12, 11.88]
+
+
+def test_refusal_when_raw_values_are_still_missing(db):
+    out = StructuredQA(db, complete=lambda p: FRACTION_ONLY).ask(SHARE_Q)
+    assert out["abstained"] and out["rows"] == [] and "cannot calculate these shares" in out["answer"]
+    assert "%" not in out["answer"] and out["rejected_result"]["columns"] == ["segment", "share"]
+
+
+def test_model_share_column_next_to_raw_values_is_ignored(db):
+    sql = ("SELECT segment, SUM(employees_fte) AS employees_fte, SUM(employees_fte) * 100.0 / 1000 AS share_pct "
+           "FROM segment_kpis WHERE year = 2025 GROUP BY segment")
+    out = StructuredQA(db, complete=lambda p: sql).ask(SHARE_Q)
+    assert out["columns"] == ["segment", "employees_fte"]
+    assert out["presentation"]["model_computed_columns_ignored"] == ["share_pct"]
+    assert [s["share_percent"] for s in out["analytics"]["shares"]] == [88.12, 11.88]
+    assert "share_pct" in out["raw_result"]["columns"] and "Model-computed columns not used: share_pct" in out["answer"]
+
+
+def test_employee_contribution_question(db):
+    out = StructuredQA(db, complete=lambda p: RAW_2025).ask(
+        "How much does each segment contribute to 2025 employees (FTE) in the segment kpi table?")
+    assert {s["label"]: s["share_percent"] for s in out["analytics"]["shares"]} == {"Europe": 88.12, "Mining": 11.88}
+
+
+def test_grouped_shares_within_each_period(db):
+    sql = "SELECT year, segment, employees_fte FROM segment_kpis ORDER BY year, segment"
+    out = StructuredQA(db, complete=lambda p: sql).ask(
+        "What share of employees does each segment have per year in the segment kpi table?")
+    by_group = {}
+    for s in out["analytics"]["shares"]:
+        by_group.setdefault(s["group"], {})[s["label"]] = s["share_percent"]
+    assert by_group == {2024: {"Europe": 91.07, "Mining": 8.93}, 2025: {"Europe": 88.12, "Mining": 11.88}}
+    assert {d["group"]: d["denominator"] for d in out["analytics"]["share_denominators"]} == {2024: 53302, 2025: 49796}
+    assert out["chart"]["type"] != "pie"  # several wholes: not one pie
+
+
+def test_zero_missing_and_negative_values_are_refused(db):
+    schema = discover(db)
+
+    def check(rows):
+        return shares.check_shares("share of value by c", "SELECT c, value FROM x", ["c", "value"], rows, schema, db, [], [])
+
+    assert "zero" in check([["a", 0], ["b", 0]])["issues"][0]
+    assert "missing for b" in check([["a", 5], ["b", None]])["issues"][0]
+    assert "negative for b" in check([["a", 5], ["b", -2]])["issues"][0]
+    ok = check([["a", 1], ["b", 3]])
+    assert ok["issues"] == [] and [s["share_percent"] for s in ok["shares"]] == [25.0, 75.0]
+    assert not ok["denominator_verified"]
+
+
+def test_missing_year_filter_gives_a_wrong_denominator_and_is_refused(db):
+    both_years = "SELECT segment, SUM(employees_fte) AS employees_fte FROM segment_kpis GROUP BY segment"
+    prompts = []
+    out = StructuredQA(db, complete=lambda p: prompts.append(p) or both_years).ask(SHARE_Q)
+    assert len(prompts) == 2 and out["abstained"] and out["analytics"] == {}
+    assert "103,098" in out["answer"] and "49,796" in out["answer"] and "cannot calculate these shares" in out["answer"]
+
+
+def test_category_filter_scope_and_selected_category(sales_db):
+    q = "What share of Europe's 2025 revenue does each product have in the regional sales table?"
+    unfiltered = "SELECT product, SUM(revenue) AS revenue FROM regional_sales WHERE year = 2025 GROUP BY product"
+    filtered = ("SELECT product, SUM(revenue) AS revenue FROM regional_sales WHERE region = 'Europe' AND year = 2025 "
+                "GROUP BY product")
+    answers = iter([unfiltered, filtered])
+    out = StructuredQA(sales_db, complete=lambda p: next(answers)).ask(q)
+    assert out["generation"]["retry_for_raw_values"]["issues"] and out["share_validation"]["denominator_verified"]
+    assert {s["label"]: s["share_percent"] for s in out["analytics"]["shares"]} == {"Coil": 60.0, "Plate": 40.0}
+    # a named category of the share column selects the numerator; the denominator needs every category
+    q2 = "What share of 2025 revenue did Europe have in the regional sales table?"
+    only = ("SELECT region, SUM(revenue) AS revenue FROM regional_sales WHERE region = 'Europe' AND year = 2025 "
+            "GROUP BY region")
+    every = "SELECT region, SUM(revenue) AS revenue FROM regional_sales WHERE year = 2025 GROUP BY region"
+    answers = iter([only, every])
+    out = StructuredQA(sales_db, complete=lambda p: next(answers)).ask(q2)
+    assert {s["label"]: s["share_percent"] for s in out["analytics"]["shares"]} == {"Asia": 83.33, "Europe": 16.67}
+    assert "Europe (asked): 100 / 600 = 16.67%" in out["answer"]
+    assert StructuredQA(sales_db, complete=lambda p: only).ask(q2)["abstained"]
+
+
+def test_limited_and_non_additive_results_are_refused(db):
+    limited = "SELECT segment, employees_fte FROM segment_kpis WHERE year = 2025 ORDER BY employees_fte DESC LIMIT 1"
+    assert "LIMIT" in StructuredQA(db, complete=lambda p: limited).ask(SHARE_Q)["answer"]
+    avg = "SELECT segment, AVG(employees_fte) AS employees_fte FROM segment_kpis WHERE year = 2025 GROUP BY segment"
+    assert "average" in StructuredQA(db, complete=lambda p: avg).ask(SHARE_Q)["answer"]
+
+
+def test_ratio_from_raw_columns_and_model_ratio_ignored(db):
+    q = "What is the ratio of sales to employees for each segment in 2025 in the segment kpi table?"
+    raw = ("SELECT segment, sales_usd_m, employees_fte, 1.0 * sales_usd_m / employees_fte AS ratio FROM segment_kpis "
+           "WHERE year = 2025")
+    out = StructuredQA(db, complete=lambda p: raw).ask(q)
+    got = {r["label"]: r["ratio"] for r in out["analytics"]["ratios"]}
+    assert got == {"Europe": round(28793 / 43878, 6), "Mining": round(3232 / 5918, 6)}
+    assert out["presentation"]["model_computed_columns_ignored"] == ["ratio"] and "28,793 / 43,878" in out["answer"]
+    only_ratio = "SELECT segment, 1.0 * sales_usd_m / employees_fte AS ratio FROM segment_kpis WHERE year = 2025"
+    refused = StructuredQA(db, complete=lambda p: only_ratio).ask(q)
+    assert refused["abstained"] and "cannot calculate this ratio" in refused["answer"]
+    zero = shares.check_ratio(q, "SELECT a, sales, employees FROM x", ["segment", "sales", "employees"],
+                              [["A", 5, 0]], discover(db), [], [])
+    assert "undefined" in zero["issues"][0] and zero["ratios"] == []

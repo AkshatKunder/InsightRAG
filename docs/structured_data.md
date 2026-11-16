@@ -17,6 +17,9 @@ question ─► router ─┬─► document  ─► Phase 3.1 RAG pipeline (unc
 | `app/structured/schema.py` | Schema discovery: columns, types, ranges, sample values, verified keys and joins; LLM schema text |
 | `app/structured/sql_safety.py` | Text checks, SQLite authorizer, read-only connection, row and time limits |
 | `app/structured/nl2sql.py` | Prompt, SQL extraction, validation, lint and repair loop |
+| `app/structured/periods.py` | Quarter ranges and requested years (Phase 4.1) |
+| `app/structured/scope.py` | Requested filters, result-scope validation, model-derived columns (Phase 4.2) |
+| `app/structured/shares.py` | Share/ratio intent, model-computed fractions, validated shares and ratios (Phase 4.3) |
 | `app/structured/analytics.py` | Deterministic percentage changes, period comparisons, shares, summary statistics |
 | `app/structured/charts.py` | Chart-ready data (bar, line, pie) or no chart |
 | `app/structured/router.py` | Document / SQL / hybrid classification |
@@ -97,6 +100,97 @@ The model is told not to compute differences, percentage changes or shares in SQ
 values per period or category, and `analytics.py` does the arithmetic in Python. A change question
 whose result is missing one of the named periods is reported as incomplete instead of being answered.
 
+### Phase 4.1 additions
+
+- **Quarters** (`app/structured/periods.py`): "first quarter of 2025", "Q1 2025", "2025 Q4" and "3rd
+  quarter 2024" are converted to exact date ranges with the calendar. Q1 is January 1 to March 31,
+  leap years included, and Q4 ends on December 31. The range is given to the model, and a query that
+  doesn't use both dates is sent back for repair.
+- **Multi-period changes:** for "change between 2024 and 2025" the prompt asks for one row per year.
+  If the result misses a requested year, the engine retries once, naming the missing year. If a year is
+  still missing, it answers that the change cannot be calculated (`abstained`). It never computes a
+  change from one period. Only real years count as found periods: 20245 is not 2024.
+- **Name resolution:** when the question asks for an entity (for example customers) and a result column
+  contains only values of that entity's verified primary key, the unique name column is added next to
+  it. The names come from a separate validated read-only query, and the row order (ranking, top N) is
+  unchanged. The prompt also tells the model to select name columns.
+- **Hybrid citation fallback** (in the assistant; the RAG pipeline is unchanged): a claim in the
+  document answer that the selected citations don't support gets the first retrieved context chunk
+  that supports it on its own. The answer is then validated again. No chunk is added if none supports
+  the figure.
+
+### Phase 4.2 additions: result scope for multi-period comparisons
+
+These apply only to change questions naming two or more years ("How did Europe sales change between
+2024 and 2025?"). The prompt itself is unchanged; the checks run on the executed query
+(`app/structured/scope.py`).
+
+- **Requested filters come from the data.** A categorical value named in the question is detected when
+  it is a value of a TEXT column of a table the query reads, for example `segment = 'Europe'`. The
+  values are looked up with validated read-only queries. A value contained in a longer matched value is
+  ignored ("America" inside "North America").
+- **Scope validation.** The result must be limited to the requested scope:
+  - If the filter column is returned, every row must carry a requested value.
+  - If it is not returned, the SQL must filter on it in `WHERE`, `HAVING` or a join `ON`. A
+    `CASE WHEN` in the select list is not a filter. In a WHERE clause, the filter must hold in every
+    top-level OR branch: `segment = 'Europe' AND year = 2024 OR year = 2025` is rejected.
+  - Period values outside the requested years are reported.
+- **One retry, then refusal.** A query that is out of scope (or misses a requested year) is regenerated
+  once, with notes that state the missing filter and the reason for rejection. If the retried result is
+  still out of scope, the rows are withheld and kept only in `rejected_result`. The answer then says
+  the change cannot be calculated and contains no figures (`abstained`). The hybrid assistant does not
+  use an abstained structured result as evidence. Finding the right figure inside a wider result is not
+  accepted.
+- **Model-computed columns are not authoritative.** For change questions, result columns named like a
+  calculation (`sales_change`, `growth_pct`, `yoy_delta`) that are not real table columns are dropped.
+  Metric columns the question doesn't ask about are dropped too, for example `employees_fte` when the
+  question asks about sales. The full query result stays in `raw_result`, and the dropped columns are
+  listed in `presentation`. The change is calculated in `analytics.py` from the remaining raw values.
+- **Year strftime rewrite** (`nl2sql.rewrite_year_strftime`, for any question). Only when every
+  generation attempt has been rejected because a date function was applied to a numeric column,
+  `strftime('%Y', col)` is replaced by `col`. This applies only to the `'%Y'` format and only to INTEGER
+  columns whose values are all years. The attempts are tried in order, and the rewritten query is
+  validated and linted again before it is used.
+- **Answer layout.** The answer gives the value for each period, as returned and labelled with the
+  scope, then the change calculated in Python. If the rows don't give one value per requested period, the
+  answer says the change cannot be calculated.
+
+### Phase 4.3 additions: deterministic shares and ratios
+
+These apply to questions about a share, a percentage of the total, a contribution, a distribution or
+breakdown, and to ratios ("ratio of operating income to sales", "income as a percentage of sales").
+"Revenue per order" and similar "per" questions are averages and are not affected. The prompt is
+unchanged; `app/structured/shares.py` checks the executed result.
+
+- **Model-computed fractions are not used.** A result column counts as model-computed when its SQL
+  expression divides or uses a window aggregate (`OVER`), or when its alias names a share, percentage,
+  ratio or fraction and it is not a real table column. Such columns are dropped and kept only in
+  `raw_result`. Shares and ratios are calculated in Python from the raw metric values.
+- **What is identified:**
+  - the category column;
+  - an optional group, such as a year with several values or a second category named after
+    "each/by/per";
+  - the single metric the question asks about.
+  A value named in the question that belongs to the category column ("What share did Europe have?")
+  selects the numerator, not a filter, so the denominator still needs every category.
+- **Denominator checks:**
+  - one row per category within each group, with no missing values;
+  - no negative values (shares of a total are not meaningful then);
+  - a total that is not zero;
+  - no `LIMIT` or row cap;
+  - an additive metric (`AVG`/`MIN`/`MAX` are refused);
+  - the requested scope: named filters and years.
+  For a `SUM`/`COUNT` (or plain column) from one table, an independent read-only query computes the
+  total for the requested years and filters. The returned values must add up to it. With joins or
+  other expressions, the denominator is the total of the returned rows, and the answer says so.
+- **Ratios:** each row needs one raw column for each term and a non-zero denominator.
+- **One retry, then refusal.** If the raw values are missing or a check fails, the question is
+  regenerated once, naming the raw columns to return and the reason for rejection. If it still fails,
+  the rows are withheld and the answer says the shares (or ratio) cannot be calculated reliably.
+- **Answer layout:** raw value / denominator = percentage for each category, labelled with the metric,
+  scope and group, plus whether the total was checked against an independent query. Validated
+  ungrouped shares can be shown as a pie chart even without `SUM` in the SQL.
+
 ## Safety controls
 
 1. **Write requests are refused before any SQL is generated**, for example "delete/drop/update/insert …
@@ -161,3 +255,10 @@ python scripts/evaluate_structured.py            # 2 deterministic runs (tempera
 The benchmark is `data/evaluation/structured_benchmark_v1.json`: 28 questions with gold SQL, and the 25
 questions of `benchmark_v2.json` are also used for routing. The report is
 `data/evaluation/phase4_evaluation_report.md`, and the results are in `data/evaluation/results/phase4/`.
+The Phase 4.1 and 4.2 results are in `results/phase4_1/` and `results/phase4_2/`, with reports
+`phase4_1_evaluation_report.md` and `phase4_2_evaluation_report.md`; Phase 4.3 results are in
+`results/phase4_3/`, with `phase4_3_evaluation_report.md`. Since Phase 4.3, share questions are graded
+like period changes: the figures must be right, the rows must be the raw values of the gold result, and
+no model-computed share column may be presented. Phase 4.2 grades a period-change
+question as correct only when three things hold: the calculated change is right, the rows match the
+gold (scoped) result, and no model-computed change column is presented.
