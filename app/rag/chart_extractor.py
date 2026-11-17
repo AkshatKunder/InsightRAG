@@ -3,8 +3,7 @@
 pypdf flattens chart labels into an unlabelled run of numbers. These helpers
 read a page's form XObject drawing instructions (bars, legend swatches and
 ToUnicode-decoded labels) and map every value label to its category and
-series. Used by ``app.rag.document_context`` and
-``scripts/verify_chart_mapping.py``.
+series. Used by ``app.rag.document_context``.
 """
 
 from __future__ import annotations

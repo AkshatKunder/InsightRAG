@@ -10,3 +10,4 @@ qdrant-client>=1.10
 rank-bm25
 ollama
 openpyxl
+streamlit>=1.40

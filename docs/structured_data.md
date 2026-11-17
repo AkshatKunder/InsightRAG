@@ -248,17 +248,8 @@ too many categories. The spec includes the reason for the choice.
 
 ## Evaluation
 
-```bash
-python scripts/evaluate_structured.py            # 2 deterministic runs (temperature 0, seed 42)
-```
-
-The benchmark is `data/evaluation/structured_benchmark_v1.json`: 28 questions with gold SQL, and the 25
-questions of `benchmark_v2.json` are also used for routing. The report is
-`data/evaluation/phase4_evaluation_report.md`, and the results are in `data/evaluation/results/phase4/`.
-The Phase 4.1 and 4.2 results are in `results/phase4_1/` and `results/phase4_2/`, with reports
-`phase4_1_evaluation_report.md` and `phase4_2_evaluation_report.md`; Phase 4.3 results are in
-`results/phase4_3/`, with `phase4_3_evaluation_report.md`. Since Phase 4.3, share questions are graded
-like period changes: the figures must be right, the rows must be the raw values of the gold result, and
-no model-computed share column may be presented. Phase 4.2 grades a period-change
-question as correct only when three things hold: the calculated change is right, the rows match the
-gold (scoped) result, and no model-computed change column is presented.
+The evaluation scripts and per-phase results were removed to keep the repository small (they remain in
+Git history). The benchmarks are kept as reference data: `data/evaluation/structured_benchmark_v1.json`
+(28 questions with gold SQL) and `benchmark_v2.json` (document questions). The final structured-data
+results are summarised in `data/evaluation/phase4_3_evaluation_report.md`: 28/28 correct in two
+deterministic runs (temperature 0, seed 42).

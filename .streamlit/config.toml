@@ -1,0 +1,20 @@
+[theme]
+base = "dark"
+primaryColor = "#7c9cff"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#161b26"
+textColor = "#e6e9ef"
+
+[server]
+# Upload limit of the Streamlit server (MB); the app enforces its own per-type limits (see README).
+maxUploadSize = 60
+headless = true
+# The source watcher walks every imported module (transformers -> optional torchvision) and fills the log with
+# harmless tracebacks; developers can re-enable auto-reload with --server.fileWatcherType auto.
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
